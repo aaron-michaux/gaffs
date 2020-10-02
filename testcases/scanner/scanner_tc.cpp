@@ -5,7 +5,7 @@
 
 #include "stdinc.hpp"
 
-#include "scanner/token-producer.hpp"
+#include "scanner/scanner.hpp"
 
 namespace giraffe
 {
@@ -30,7 +30,7 @@ CATCH_TEST_CASE("Scanner", "[scanner]")
    // This code should just finish without tripping the memory sanitizer
    CATCH_SECTION("scanner")
    { //
-      TokenProducer tokens(scanner_test_str_0);
+      Scanner tokens(scanner_test_str_0);
 
       //// while(tokens.has_next()) cout << tokens.consume().to_string() <<
       /// endl;

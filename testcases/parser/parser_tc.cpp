@@ -7,7 +7,7 @@
 
 #include "compiler/compiler-context.hpp"
 #include "parser/parser.hpp"
-#include "scanner/token-producer.hpp"
+#include "scanner/scanner.hpp"
 
 namespace giraffe
 {
@@ -32,7 +32,7 @@ CATCH_TEST_CASE("Parser", "[parser]")
    { //
       cout << "Hello parser!" << endl;
 
-      TokenProducer tokens(test_str_0);
+      Scanner tokens(test_str_0);
       CompilerContext context;
 
       auto ast = parse(context, tokens);

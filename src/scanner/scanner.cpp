@@ -1,11 +1,11 @@
 
-#include "token-producer.hpp"
+#include "scanner.hpp"
 
 #include "scanner_bridge.h"
 
 #include <stdio.h>
 
-#define This TokenProducer
+#define This Scanner
 
 namespace giraffe
 {
@@ -19,13 +19,13 @@ struct This::Worker
    FILE* fp_                  = nullptr;
    size_t current_index_      = 0;
    string_view current_data_  = "";
-   TokenProducerOptions opts_ = {};
+   ScannerOptions opts_ = {};
 
    void cleanup_scanner_resources_() noexcept;
    void* get_scanner_() noexcept;
 
  public:
-   Worker(vector<string>&& data, TokenProducerOptions opts)
+   Worker(vector<string>&& data, ScannerOptions opts)
        : data_(std::move(data))
        , opts_(opts)
    {
@@ -58,7 +58,7 @@ void* This::Worker::get_scanner_() noexcept
 }
 
 static bool is_token_of_interest(const Token& token,
-                                 const TokenProducerOptions& opts) noexcept
+                                 const ScannerOptions& opts) noexcept
 {
    if(opts.skip_comments && token.id() == TCOMMENT) return false;
    if(opts.skip_whitespace
@@ -101,14 +101,14 @@ static size_t estimate_n_tokens(const auto& data)
    return approx_tokens;
 }
 
-This::This(string_view data, TokenProducerOptions opts) noexcept
+This::This(string_view data, ScannerOptions opts) noexcept
     : worker_(
         make_unique<Worker>(vector{{string(cbegin(data), cend(data))}}, opts))
 {
    tokens_.reserve(estimate_n_tokens(text_data()));
 }
 
-This::This(vector<string>&& data, TokenProducerOptions opts) noexcept
+This::This(vector<string>&& data, ScannerOptions opts) noexcept
     : worker_(make_unique<Worker>(std::move(data), opts))
 {
    tokens_.reserve(estimate_n_tokens(text_data()));

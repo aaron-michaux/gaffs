@@ -2,7 +2,7 @@
 #pragma once
 
 #include "diagnostic.hpp"
-#include "scanner/token-producer.hpp"
+#include "scanner/scanner.hpp"
 
 namespace giraffe
 {
@@ -10,7 +10,7 @@ struct Token;
 
 struct CompilerOptions final
 {
-   TokenProducerOptions token_producer_options = {};
+   ScannerOptions token_producer_options = {};
    bool w_error                                = false;
 };
 

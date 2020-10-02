@@ -4,10 +4,10 @@
 namespace giraffe
 {
 struct CompilerContext;
-struct TokenProducer;
+struct Scanner;
 
 class GrammarNode;
 
 unique_ptr<GrammarNode> parse(CompilerContext& context,
-                              TokenProducer& tokens) noexcept;
+                              Scanner& tokens) noexcept;
 }; // namespace giraffe

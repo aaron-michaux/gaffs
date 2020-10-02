@@ -5,13 +5,13 @@
 
 namespace giraffe
 {
-struct TokenProducerOptions final
+struct ScannerOptions final
 {
    bool skip_whitespace = true;
    bool skip_comments   = true;
 };
 
-struct TokenProducer final
+struct Scanner final
 {
  private:
    vector<Token> tokens_ = {};
@@ -23,15 +23,15 @@ struct TokenProducer final
  public:
    /// Initialize the producer. Text memory is STORED here.
    /// Tokens don't store text
-   TokenProducer(string_view text_data,
-                 TokenProducerOptions opts = {}) noexcept;
-   TokenProducer(vector<string>&& text_data,
-                 TokenProducerOptions opts = {}) noexcept;
-   TokenProducer(const TokenProducer&) = delete;
-   TokenProducer(TokenProducer&&)      = default;
-   ~TokenProducer();
-   TokenProducer& operator=(const TokenProducer&) = delete;
-   TokenProducer& operator=(TokenProducer&&) = default;
+   Scanner(string_view text_data,
+                 ScannerOptions opts = {}) noexcept;
+   Scanner(vector<string>&& text_data,
+                 ScannerOptions opts = {}) noexcept;
+   Scanner(const Scanner&) = delete;
+   Scanner(Scanner&&)      = default;
+   ~Scanner();
+   Scanner& operator=(const Scanner&) = delete;
+   Scanner& operator=(Scanner&&) = default;
 
    /// The underlying text data
    const vector<string>& text_data();

@@ -1,13 +1,13 @@
 
 #pragma once
 
-#include "scanner/token-producer.hpp"
+#include "scanner/scanner.hpp"
 
 #include <type_traits>
 
 namespace giraffe::detail
 {
-template<typename T> bool match_worker(TokenProducer& tokens, T&& id) noexcept
+template<typename T> bool match_worker(Scanner& tokens, T&& id) noexcept
 {
    if constexpr(std::is_integral<std::remove_reference_t<T>>::value) {
       if(int(id) == tokens.current().id()) {
@@ -28,7 +28,7 @@ template<typename T> bool match_worker(TokenProducer& tokens, T&& id) noexcept
 }
 
 template<typename T, typename... Ts>
-bool match_worker(TokenProducer& tokens, T&& id, Ts&&... rest) noexcept
+bool match_worker(Scanner& tokens, T&& id, Ts&&... rest) noexcept
 {
    return match_worker(tokens, id)
           && match_worker(tokens, std::forward<Ts>(rest)...);
@@ -38,7 +38,7 @@ bool match_worker(TokenProducer& tokens, T&& id, Ts&&... rest) noexcept
 namespace giraffe
 {
 template<typename... Ts>
-bool skip_to_sequence(TokenProducer& tokens, Ts&&... ids) noexcept
+bool skip_to_sequence(Scanner& tokens, Ts&&... ids) noexcept
 {
    while(tokens.has_next()) {
       const auto start_position = tokens.position();

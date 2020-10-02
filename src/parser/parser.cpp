@@ -4,7 +4,7 @@
 namespace giraffe
 {
 unique_ptr<GrammarNode> parse(CompilerContext& context,
-                              TokenProducer& tokens) noexcept
+                              Scanner& tokens) noexcept
 {
    if(!expect(tokens, first_set_grammar)) {
       push_error(context, tokens.current().location(), "expected start token");

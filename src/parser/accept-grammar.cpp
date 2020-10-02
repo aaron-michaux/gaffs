@@ -6,7 +6,7 @@ namespace giraffe
 // -------------------------------------------------------------- accept grammar
 
 GrammarNode* accept_grammar(CompilerContext& context,
-                            TokenProducer& tokens) noexcept
+                            Scanner& tokens) noexcept
 {
    auto grammar = make_unique<GrammarNode>();
 

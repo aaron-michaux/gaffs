@@ -6,14 +6,14 @@ namespace giraffe
 {
 // -------------------------------------------------------------------- recovery
 
-bool recover_to_next_rule(TokenProducer& tokens) noexcept
+bool recover_to_next_rule(Scanner& tokens) noexcept
 {
    return skip_to_sequence(tokens, TIDENTIFIER, TCOLON, first_set_element_list);
 }
 
 // ----------------------------------------------------------------- accept rule
 
-RuleNode* accept_rule(CompilerContext& context, TokenProducer& tokens) noexcept
+RuleNode* accept_rule(CompilerContext& context, Scanner& tokens) noexcept
 {
    auto rule = make_unique<RuleNode>();
 
