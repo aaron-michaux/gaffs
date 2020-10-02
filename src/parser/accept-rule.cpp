@@ -20,7 +20,7 @@ RuleNode* accept_rule(CompilerContext& context, TokenProducer& tokens) noexcept
    assert(expect(tokens, first_set_rule));
 
    rule->set_identifier(tokens.consume());
-   assert(identifier.id() == TIDENTIFIER);
+   assert(rule->identifier().id() == TIDENTIFIER);
 
    if(!expect(tokens, TCOLON)) {
       push_error(context, tokens.current().location(), "expected ':'"s);

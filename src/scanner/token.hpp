@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "scanner.h"
+#include "scanner_bridge.h"
 
 #include "source-location.hpp"
 
