@@ -1,0 +1,50 @@
+
+# -------------------------------------------------------------------- Toolchain
+
+include ${MOBIUSDIR}/toolchains/flags-${TOOL}-${TOOL_VERSION}.ninja
+
+# ---------------------------------------------------------------- Configuration
+
+target   = ${TARGET}
+builddir = ${BUILDDIR}
+
+user_flags = -Isrc -Isrc/contrib -Isrc/contrib/fmt/include
+user_link  =
+
+pchfile    = src/stdinc.hpp
+cpp_std    = -std=c++20
+o_flag     = ${O_FLAG}
+c_flags    = ${C_FLAGS} $user_flags
+cpp_flags  = $cpp_std -Werror ${CPP_FLAGS} $user_flags
+
+link_exec_flags = ${LINK_FLAGS} $user_link
+
+# ------------------------------------------------------------------------ Rules
+
+include ${MOBIUSDIR}/rules.ninja
+
+# ------------------------------------------------------------------------ Build
+# Source files put into unity-build
++src cd=. CPP_OBJS=*.o CPP_FILES=*.cpp CC_FILES=*.cc ${SRC_DIRECTORIES}
+- *.cpp                 build $builddir/%.o:       cpp_pch ^ | $builddir/$pchfile.gch
+- *.cc                  build $builddir/%.o:       cpp ^
+
+# Source files that are linked normally, even in unity build
++src cd=. OTHER_OBJS=*.o ${SRC_DIRECTORIES}
+- *.c                   build $builddir/%.o:       c_rule ^
+- *.l                   build $builddir/%.o:       flex_rule ^
+- */gen*_c.sh           build $builddir/%.o:       gen_c_rule ^
+
+
+# ----------------------------------------------------------------------- Target
+
+build $builddir/$pchfile.gch: pch $pchfile
+
+build $builddir/_unity.o: unity ${CC_FILES} ${CPP_FILES}
+build $target.unity: link_exec $builddir/_unity.o ${OTHER_OBJS}
+
+build $target: link_exec ${CPP_OBJS} ${OTHER_OBJS}
+
+# default
+default $target
+
