@@ -25,16 +25,22 @@ class RuleNode final : public AstNode
       return reinterpret_cast<const ElementListNode*>(children()[index]);
    }
 
-   std::ostream& stream(std::ostream& ss) const noexcept override
+   std::ostream& stream(std::ostream& ss,
+                        string_view buffer) const noexcept override
    {
       constexpr const char* tab = "      ";
-      ss << identifier_.text() << ":";
+      ss << identifier_.text(buffer) << ":";
       switch(size()) {
       case 0: ss << " ;"; break;
-      case 1: ss << ' ' << children()[0] << " ;"; break;
+      case 1: ss << ' ' << PP{children()[0], buffer} << " ;"; break;
       default:
-         for(size_t i = 0; i < size(); ++i)
-            ss << '\n' << tab << (i == 0 ? "  " : "| ") << children()[i];
+         for(size_t i = 0; i < size(); ++i) {
+            if(i == 0)
+               ss << " ";
+            else
+               ss << '\n' << tab << "| ";
+            ss << PP{children()[i], buffer};
+         }
          ss << '\n' << tab << ';';
       }
       ss << "\n";

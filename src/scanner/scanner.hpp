@@ -14,8 +14,7 @@ struct ScannerOptions final
 struct Scanner final
 {
  private:
-   vector<Token> tokens_ = {};
-   size_t position_      = 0; //!< The position in the token stack
+   size_t position_ = 0; //!< The position in the token stack
 
    struct Worker;
    unique_ptr<Worker> worker_;
@@ -23,24 +22,28 @@ struct Scanner final
  public:
    /// Initialize the producer. Text memory is STORED here.
    /// Tokens don't store text
-   Scanner(string_view text_data,
-                 ScannerOptions opts = {}) noexcept;
-   Scanner(vector<string>&& text_data,
-                 ScannerOptions opts = {}) noexcept;
+   Scanner();
+   Scanner(string_view text_data, ScannerOptions opts = {}) noexcept;
    Scanner(const Scanner&) = delete;
-   Scanner(Scanner&&)      = default;
+   Scanner(Scanner&&) noexcept;
    ~Scanner();
    Scanner& operator=(const Scanner&) = delete;
-   Scanner& operator=(Scanner&&) = default;
+   Scanner& operator                  =(Scanner&&) noexcept;
 
-   /// The underlying text data
-   const vector<string>& text_data();
+   /// Initialize from a single text... memory not stored here
+   void initialize(string_view text_data, ScannerOptions opts = {}) noexcept;
+
+   /// Initialize from a set of texts... possibly lazily loaded, memory not
+   /// stored here
+   void initialize(size_t n_texts,
+                   std::function<string_view(size_t index)> get_text_fun,
+                   ScannerOptions opts = {}) noexcept;
+
+   /// Returns the buffer for the current token
+   string_view current_buffer() const noexcept;
 
    /// EOF is appened when the end of all `text-data` is processed
-   bool found_eof() const noexcept
-   {
-      return tokens_.size() > 0 && tokens_.back().is_eof();
-   }
+   bool found_eof() const noexcept;
 
    /// Index to the current token
    size_t position() const noexcept { return position_; }
@@ -49,7 +52,7 @@ struct Scanner final
    bool has_next() noexcept;
 
    /// Skip to a specific token position
-   void set_position(size_t new_position) noexcept { position_ = new_position; }
+   void set_position(size_t new_position) noexcept;
 
    /// Consume the current token, and move to the next
    const Token& consume() noexcept;

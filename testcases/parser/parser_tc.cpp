@@ -30,13 +30,19 @@ CATCH_TEST_CASE("Parser", "[parser]")
    // This code should just finish without tripping the memory sanitizer
    CATCH_SECTION("parser")
    { //
-      cout << "Hello parser!" << endl;
+      TRACE("Hello parser!");
 
-      Scanner tokens(test_str_0);
-      CompilerContext context;
+      if(false) {
+         Scanner tokens(test_str_0);
+         while(tokens.has_next())
+            cout << tokens.consume().to_string(tokens.current_buffer()) << endl;
+      }
 
-      auto ast = parse(context, tokens);
-      ast->stream(cout);
+      CompilerContext context = make_compiler_context(test_str_0);
+      auto ast                = parse(context);
+      ast->stream(cout, context.tokens.current_buffer());
+
+      context.stream(cout);
    }
 }
 

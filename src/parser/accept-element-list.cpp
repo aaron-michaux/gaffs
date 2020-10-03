@@ -4,20 +4,34 @@
 
 namespace giraffe
 {
-// -------------------------------------------------------------------- recovery
-
-bool recover_to_next_element_list(Scanner& tokens) noexcept
-{
-   return skip_to_sequence(tokens, first_set_element_list);
-}
-
 // --------------------------------------------------------- accept element list
 
-ElementListNode* accept_element_list(CompilerContext&, Scanner&) noexcept
+ElementListNode* accept_element_list(CompilerContext& context) noexcept
 {
-   // First Set [ IDENTIFIER, STRING, LPARAN ]
-   // Follow Set [ PIPE, SEMICOLON ]
-   return nullptr;
+   Scanner& tokens = context.tokens;
+   assert(expect(tokens, first_set_element_list));
+
+   auto elem_list = make_unique<ElementListNode>();
+
+   vector<AstNode*> elems;
+   while(tokens.has_next()) {
+      if(expect(tokens, first_set_element)) {
+         elems.push_back(accept_element(context));
+
+      } else if(expect(tokens, follow_set_element_list)) {
+         break; // we're done
+
+      } else {
+         push_error(context, "expected `rule element`"s);
+         if(skip_past_element(tokens) && expect(tokens, first_set_element))
+            continue; // try again
+         break;
+      }
+   }
+
+   elem_list->set_children(std::move(elems));
+
+   return elem_list.release();
 }
 
 } // namespace giraffe

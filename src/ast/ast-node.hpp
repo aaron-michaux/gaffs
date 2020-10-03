@@ -13,6 +13,10 @@ class RuleNode;
 class ElementListNode;
 class ElementNode;
 
+// ---------------------------------------------------------------------- Detail
+// to assist in printing
+using AstNodeSV = std::pair<const AstNode*, string_view>;
+
 // --------------------------------------------------------------------- AstNode
 
 class AstNode
@@ -20,6 +24,8 @@ class AstNode
  protected:
    AstNode* parent_           = nullptr;
    vector<AstNode*> children_ = {};
+
+   using PP = AstNodeSV;
 
  public:
    AstNode()               = default;
@@ -41,12 +47,16 @@ class AstNode
    size_t size() const noexcept { return children_.size(); }
    bool empty() const noexcept { return children_.empty(); }
 
-   virtual std::ostream& stream(std::ostream&) const noexcept = 0;
+   virtual std::ostream& stream(std::ostream&, string_view) const noexcept = 0;
 };
 
-inline std::ostream& operator<<(std::ostream& os, AstNode* node)
+inline std::ostream& operator<<(std::ostream& ss, AstNodeSV pp)
 {
-   return node->stream(os);
+   if(pp.first == nullptr)
+      ss << "<nullptr>";
+   else
+      pp.first->stream(ss, pp.second);
+   return ss;
 }
 
 } // namespace giraffe

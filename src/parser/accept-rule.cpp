@@ -1,5 +1,4 @@
 
-
 #include "parser-internal.hpp"
 
 namespace giraffe
@@ -8,55 +7,70 @@ namespace giraffe
 
 bool recover_to_next_rule(Scanner& tokens) noexcept
 {
-   return skip_to_sequence(tokens, TIDENTIFIER, TCOLON, first_set_element_list);
+   return skip_to_sequence(tokens, recovery_seq_rule);
 }
 
 // ----------------------------------------------------------------- accept rule
 
-RuleNode* accept_rule(CompilerContext& context, Scanner& tokens) noexcept
+static bool try_push_1_elem_list(CompilerContext& context,
+                                 vector<AstNode*>& elem_lists)
 {
-   auto rule = make_unique<RuleNode>();
+   Scanner& tokens = context.tokens;
+   while(true) {
+      if(expect(tokens, first_set_element_list)) {
+         elem_lists.push_back(accept_element_list(context));
+         return true; // We got 1 element list
+
+      } else {
+         push_error(context, "expected an `element list`"s);
+
+         // Attempt to find next element-list
+         if(skip_past_element(tokens)) continue; // try again
+
+         recover_to_next_rule(tokens); // we failed, so go no next rule...
+         return false;                 // we cannot get an element-list
+      }
+   }
+}
+
+// ----------------------------------------------------------------- accept rule
+
+RuleNode* accept_rule(CompilerContext& context) noexcept
+{
+   Scanner& tokens = context.tokens;
+   auto rule       = make_unique<RuleNode>();
 
    assert(expect(tokens, first_set_rule));
 
    rule->set_identifier(tokens.consume());
    assert(rule->identifier().id() == TIDENTIFIER);
 
-   if(!expect(tokens, TCOLON)) {
-      push_error(context, tokens.current().location(), "expected ':'"s);
+   if(!accept(tokens, TCOLON)) {
+      push_error(context, "expected ':'"s);
       recover_to_next_rule(tokens);
       return rule.release();
    }
 
    vector<AstNode*> elem_lists;
 
-   if(!expect(tokens, first_set_element_list)) {
-      push_error(
-          context, tokens.current().location(), "expected a 'rule element'"s);
-      if(!recover_to_next_element_list(tokens)) { // try to find the next list
-         recover_to_next_rule(tokens); // we failed, so go no next rule...
-         return rule.release();
+   // Get the 1st element
+   if(!try_push_1_elem_list(context, elem_lists)) return rule.release(); // bail
+
+   while(true) {
+      if(accept(tokens, TPIPE)) { // get subsequent element
+         if(!try_push_1_elem_list(context, elem_lists))
+            return rule.release(); // bail
+
+      } else if(accept(tokens, TSEMICOLON)) { // normal termination
+         break;                               // the rule ends normally
+
+      } else { // okay, try to get another element anyway
+         if(!try_push_1_elem_list(context, elem_lists))
+            return rule.release(); // bail if impossible
       }
    }
-   // elem_lists.push_back(accept_element_list(context, tokens));
 
-   // while(tokens.has_next()) {
-
-   // }
-
-   // while(tokens.peek().id() == TPIPE) {
-   //    expect(tokens, TPIPE);
-   //    elem_lists.push_back(accept_element_list(context, tokens));
-   // }
-   // rule->set_children(std::move(elem_lists));
-
-   if(!expect(tokens, TSEMICOLON)) {
-      push_error(context,
-                 tokens.current().location(),
-                 "expected ';' at the end of a rule"s);
-      recover_to_next_rule(tokens);
-      return rule.release();
-   }
+   rule->set_children(std::move(elem_lists));
 
    return rule.release();
 }

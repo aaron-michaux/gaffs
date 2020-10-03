@@ -3,18 +3,17 @@
 
 namespace giraffe
 {
-unique_ptr<GrammarNode> parse(CompilerContext& context,
-                              Scanner& tokens) noexcept
+unique_ptr<GrammarNode> parse(CompilerContext& context) noexcept
 {
-   if(!expect(tokens, first_set_grammar)) {
-      push_error(context, tokens.current().location(), "expected start token");
+   if(!expect(context.tokens, first_set_grammar)) {
+      push_error(context, "expected start token");
 
       // recovery
-      skip_to_sequence(tokens, TSTART);
+      skip_to_sequence(context.tokens, first_set_grammar);
    }
 
-   return !expect(tokens, first_set_grammar)
-              ? nullptr // we cannot parse the grammar!
-              : unique_ptr<GrammarNode>(accept_grammar(context, tokens));
+   if(expect(context.tokens, first_set_grammar))
+      return unique_ptr<GrammarNode>(accept_grammar(context));
+   return make_unique<GrammarNode>();
 }
 }; // namespace giraffe

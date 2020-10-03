@@ -18,9 +18,10 @@ class GrammarNode final : public AstNode
       return reinterpret_cast<const RuleNode*>(children()[index]);
    }
 
-   std::ostream& stream(std::ostream& ss) const noexcept override
+   std::ostream& stream(std::ostream& ss,
+                        string_view buffer) const noexcept override
    {
-      for(const auto ptr : children()) ss << "\n" << ptr;
+      for(const auto ptr : children()) ss << "\n" << PP{ptr, buffer};
       ss << "\n";
       return ss;
    }

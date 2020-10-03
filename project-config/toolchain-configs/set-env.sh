@@ -64,7 +64,7 @@ setup_build_env()
             export TC_STATIC="-fuse-ld=lld -lm -lstdc++ -L$PREFIX/lib -Wl,-rpath,$PREFIX/lib"
             export TC_ASAN_LINK0="-fsanitize=address -L$CC_ROOT/lib/clang/${TC_VERSION}/lib/linux -Wl,-rpath,$CC_ROOT/lib/clang/${TC_VERSION}/lib/linux -lclang_rt.asan-x86_64"
             export TC_ASAN_LINK="-lm -fsanitize=address"
-            export TC_USAN_LINK="-lm -fsanitize=undefined"           
+            export TC_USAN_LINK="-lm -fsanitize=undefined -lubsan"           
             export TC_TSAN_LINK="-lm -fsanitize=thread -fPIE"
 
             #-ltsan

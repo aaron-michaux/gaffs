@@ -18,11 +18,12 @@ class ElementListNode final : public AstNode
       return reinterpret_cast<const ElementNode*>(children()[index]);
    }
 
-   std::ostream& stream(std::ostream& ss) const noexcept override
+   std::ostream& stream(std::ostream& ss,
+                        string_view buffer) const noexcept override
    {
       for(size_t i = 0; i < size(); ++i) {
          if(i > 0) ss << " ";
-         ss << children()[i];
+         ss << PP{children()[i], buffer};
       }
       return ss;
    }

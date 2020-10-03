@@ -46,6 +46,25 @@ using std::cbegin;
 using std::cend;
 using std::end;
 
+#ifdef NDEBUG
+#define TRACE(msg)
+#else
+#define TRACE(msg)                                                             \
+   {                                                                           \
+      std::cout << format(                                                     \
+          "\x1b[97m\x1b[42mTRACE\x1b[0m {}:{}: {}", __FILE__, __LINE__, (msg)) \
+                << std::endl;                                                  \
+   }
+#endif
+
+#define FATAL(msg)                                                             \
+   {                                                                           \
+      std::cerr << format(                                                     \
+          "\x1b[97m\x1b[41mFATAL\x1b[0m {}:{}: {}", __FILE__, __LINE__, (msg)) \
+                << std::endl;                                                  \
+      exit(1);                                                                 \
+   }
+
 } // namespace giraffe
 
 #endif

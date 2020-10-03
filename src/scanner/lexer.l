@@ -1,6 +1,6 @@
 %{
 #include <stdio.h>
-#include "scanner/scanner_bridge.h"
+#include "scanner/scanner-bridge.h"
 
 #define YY_INPUT(buf, result, max_size) {          \
         size_t sz = fread(buf, 1, max_size, yyin); \

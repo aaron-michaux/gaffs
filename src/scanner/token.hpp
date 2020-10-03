@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "scanner_bridge.h"
+#include "scanner-bridge.h"
 
 #include "source-location.hpp"
 
@@ -10,8 +10,8 @@ namespace giraffe
 struct Token final
 {
  private:
-   string_view text_   = ""; // the text of the token
    SourceLocation loc_ = {};
+   uint32_t length_    = 0; // starting at `loc_`
    uint16_t id_        = 0; // id of this token
 
  public:
@@ -33,14 +33,10 @@ struct Token final
                params.last_line_no,
                params.last_column_no,
                key})
+       , length_(params.text_len)
        , id_(params.token_id)
    {
-      if(params.token_id != TEOF) {
-         assert(offset() <= raw_data.size());
-         assert(offset() + params.text_len <= raw_data.size());
-         text_ = string_view(&raw_data[offset()], params.text_len);
-         assert(memcmp(text_.data(), params.text, params.text_len) == 0);
-      }
+      assert(text(raw_data) == string_view(params.text, params.text_len));
    }
 
    constexpr Token(const Token&) = default;
@@ -50,26 +46,28 @@ struct Token final
    constexpr Token& operator=(Token&&) = default;
 
    constexpr auto id() const noexcept { return id_; }
-   constexpr auto text() const noexcept { return text_; }
    constexpr auto location() const noexcept { return loc_; }
+   constexpr auto length() const noexcept { return length_; }
    constexpr auto key() const noexcept { return loc_.key; }
    constexpr uint32_t offset() const noexcept { return loc_.offset; }
    constexpr auto line_no() const noexcept { return loc_.line_no; }
    constexpr auto column_no() const noexcept { return loc_.column_no; }
-   constexpr auto end_offset() const noexcept
+
+   constexpr string_view text(string_view raw_data) const noexcept
    {
-      return offset() + text().length();
+      assert(offset() <= raw_data.size());
+      assert(offset() + length() <= raw_data.size());
+      return string_view(&raw_data[offset()], length());
    }
 
    // -- Methods -- //
 
    constexpr bool is_none() const { return id() == TNONE; }
-   constexpr bool is_start() const { return id() == TSTART; }
    constexpr bool is_eof() const { return id() == TEOF; }
    constexpr bool is_newline() const { return id() == TNEWLINE; }
    constexpr bool is_badchar() const { return id() == TBADCHAR; }
 
-   string to_string() const
+   string to_string(string_view buffer) const
    {
       static constexpr auto k_newline_sv = string_view("{newline}");
 
@@ -78,7 +76,7 @@ struct Token final
                     line_no(),
                     column_no(),
                     offset(),
-                    is_newline() ? k_newline_sv : text());
+                    is_newline() ? k_newline_sv : text(buffer));
    }
 };
 

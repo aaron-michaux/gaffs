@@ -16,7 +16,7 @@ The input file format is in `gaff` format, which is inspired by EBNF, but simple
 ```
 // Tokens are "ALL-CAPs", or strings
 
-Grammar: TSTART Rule* EOF ;
+Grammar: Rule* EOF ;
 
 Rule: IDENTIFIER ':' ElementList ('|' ElementList)* ';' ;
 
