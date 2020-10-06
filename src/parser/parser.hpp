@@ -3,7 +3,7 @@
 
 namespace giraffe
 {
-struct CompilerContext;
+class CompilerContext;
 
 unique_ptr<GrammarNode> parse(CompilerContext& context) noexcept;
 }; // namespace giraffe

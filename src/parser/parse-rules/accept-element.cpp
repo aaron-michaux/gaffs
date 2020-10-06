@@ -1,6 +1,5 @@
 
-
-#include "parser-internal.hpp"
+#include "parser/parser-internal.hpp"
 
 namespace giraffe
 {
@@ -40,6 +39,7 @@ ElementNode* accept_element(CompilerContext& context) noexcept
             if(!attempt_recovery()) return elem.release(); // outta here
          }
       } else {
+         elem->set_children({new ElementListNode});
          push_error(context, "expected an `element list`"s);
          if(!attempt_recovery()) return elem.release(); // outta here
       }

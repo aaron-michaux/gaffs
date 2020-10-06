@@ -10,12 +10,19 @@ namespace giraffe
 class ElementListNode final : public AstNode
 {
  public:
+   ElementListNode()
+       : AstNode(NodeType::ELEMENTLIST)
+   {}
    virtual ~ElementListNode() = default;
 
-   const ElementNode* element(size_t index) noexcept
+   ElementNode* element(size_t index) noexcept
    {
-      assert(index < size());
-      return reinterpret_cast<const ElementNode*>(children()[index]);
+      return cast_child_<ElementNode>(index);
+   }
+
+   const ElementNode* element(size_t index) const noexcept
+   {
+      return cast_child_<const ElementNode>(index);
    }
 
    std::ostream& stream(std::ostream& ss,

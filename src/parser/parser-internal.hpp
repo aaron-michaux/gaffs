@@ -1,4 +1,6 @@
 
+#pragma once
+
 #include "ast/ast.hpp"
 #include "compiler/compiler-context.hpp"
 #include "scanner/scanner.hpp"
@@ -21,6 +23,27 @@ RuleNode* accept_rule(CompilerContext&) noexcept;
 ElementListNode* accept_element_list(CompilerContext&) noexcept;
 ElementNode* accept_element(CompilerContext&) noexcept;
 
+//
+//
+//
+//
+// Implementations Below
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //

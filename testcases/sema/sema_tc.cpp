@@ -12,7 +12,7 @@
 
 namespace giraffe
 {
-static constexpr string_view test_str_0 = R"V0G0N(
+static constexpr string_view test_str_sema_0 = R"V0G0N(
 // Tokens are "ALL-CAPs", or strings
 
 Grammar: Rule* EOF ;
@@ -24,25 +24,32 @@ ElementList: (Element ElementSuffix?)+ ;
 Element: IDENTIFIER | STRING | '(' ElementList ')' ;
 
 ElementSuffix: '*' | '+' | '?' ;
+
 )V0G0N";
 
-CATCH_TEST_CASE("Parser", "[parser]")
+CATCH_TEST_CASE("Sema", "[sema]")
 {
    // This code should just finish without tripping the memory sanitizer
-   CATCH_SECTION("parser")
+   CATCH_SECTION("sema")
    { //
+      TRACE("Hello Sema!");
 
       if(false) {
-         Scanner tokens(test_str_0);
+         Scanner tokens(test_str_sema_0);
          while(tokens.has_next())
             cout << tokens.consume().to_string(tokens.current_buffer()) << endl;
       }
 
-      CompilerContext context = make_compiler_context(test_str_0);
+      CompilerContext context = make_compiler_context(test_str_sema_0);
       auto ast                = parse(context);
-      // ast->stream(cout, context.tokens.current_buffer());
+      auto global_scope       = build_symbol_table(context, ast.get());
 
-      // context.stream(cout);
+      calculate_first_final_follow_sets(context, global_scope.get(), ast.get());
+
+      ast->stream(cout, context.tokens.current_buffer());
+      context.stream(cout);
+      cout << '\n';
+      global_scope->stream(cout);
    }
 }
 

@@ -1,6 +1,5 @@
 
-
-#include "parser-internal.hpp"
+#include "parser/parser-internal.hpp"
 
 namespace giraffe
 {

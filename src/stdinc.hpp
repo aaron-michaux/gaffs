@@ -22,6 +22,10 @@
 
 #include "fmt/format.h"
 
+#include "utils/concepts.hpp"
+#include "utils/implode.hpp"
+#include "utils/in-list.hpp"
+#include "utils/remove-duplicates.hpp"
 #include "utils/to-array.hpp"
 
 namespace giraffe
@@ -44,7 +48,11 @@ using std::endl;
 using std::begin;
 using std::cbegin;
 using std::cend;
+using std::crbegin;
+using std::crend;
 using std::end;
+using std::rbegin;
+using std::rend;
 
 #ifdef NDEBUG
 #define TRACE(msg)
@@ -62,6 +70,7 @@ using std::end;
       std::cerr << format(                                                     \
           "\x1b[97m\x1b[41mFATAL\x1b[0m {}:{}: {}", __FILE__, __LINE__, (msg)) \
                 << std::endl;                                                  \
+      assert(false);                                                           \
       exit(1);                                                                 \
    }
 

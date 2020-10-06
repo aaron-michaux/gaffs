@@ -5,6 +5,9 @@
 
 namespace giraffe
 {
+// -----------------------------------------------------------------------
+// stream
+
 std::ostream& This::stream(std::ostream& ss) const noexcept
 {
    ss << format(R"V0G0N(
@@ -26,6 +29,19 @@ CompilerContext
    return ss;
 }
 
+// ------------------------------------------------------------------------ text
+
+string_view text(const CompilerContext& context, const Token& token) noexcept
+{
+   assert(token.key() < context.texts.size());
+   const auto& ss = context.texts.at(token.key());
+   assert(token.offset() <= ss.size());
+   assert(token.offset() + token.length() <= ss.size());
+   return string_view(&ss[token.offset()], token.length());
+}
+
+// ------------------------------------------------------- make-compiler-context
+
 CompilerContext make_compiler_context(string_view text, CompilerOptions opts)
 {
    CompilerContext context;
@@ -42,6 +58,8 @@ CompilerContext make_compiler_context(string_view text, CompilerOptions opts)
    return context;
 }
 
+// ------------------------------------------------------------------ push-error
+
 void push_error(CompilerContext& context,
                 SourceLocation location,
                 string&& message) noexcept
@@ -54,6 +72,26 @@ void push_error(CompilerContext& context,
 void push_error(CompilerContext& context, string&& message) noexcept
 {
    push_error(context, context.tokens.current().location(), std::move(message));
+}
+
+// ---------------------------------------------------------------- push-warning
+
+void push_warn(CompilerContext& context,
+               SourceLocation location,
+               string&& message) noexcept
+{
+   if(context.options.w_error) {
+      push_error(context, location, std::move(message));
+   } else {
+      context.diagnostics.emplace_back(
+          Diagnostic::WARN, location, std::move(message));
+      context.n_warnings += 1;
+   }
+}
+
+void push_warn(CompilerContext& context, string&& message) noexcept
+{
+   push_warn(context, context.tokens.current().location(), std::move(message));
 }
 
 } // namespace giraffe

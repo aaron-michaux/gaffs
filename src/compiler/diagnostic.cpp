@@ -3,12 +3,15 @@
 
 #include "compiler-context.hpp"
 #include "diagnostic.hpp"
+#include "utils/in-list.hpp"
 
 namespace giraffe
 {
 std::ostream& This::stream(std::ostream& ss,
                            const CompilerContext& context) const noexcept
 {
+   static constexpr auto sentence_ends = to_array<char>({'.', '!', '?'});
+
    const bool use_color = context.options.color_diagnostics;
 
    ss << context.names.at(location.key);
@@ -16,7 +19,9 @@ std::ostream& This::stream(std::ostream& ss,
    if(use_color) { ss << k_level_colors.at(size_t(level)); }
    ss << k_level_names.at(size_t(level)) << ':';
    if(use_color) { ss << k_color_none; }
-   ss << ' ' << message << ".\n";
+   ss << ' ' << message;
+   if(message.size() > 0 && !in_list(message.back(), sentence_ends)) ss << '.';
+   ss << '\n';
 
    const auto text                   = context.texts.at(location.key);
    const auto [line_start, line_end] = find_line(text, location.offset);

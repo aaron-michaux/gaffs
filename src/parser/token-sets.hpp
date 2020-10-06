@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "scanner/token-types.h"
+
 namespace giraffe
 {
 // --------------------------------------------------------------------- grammar

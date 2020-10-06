@@ -11,7 +11,7 @@ struct ScannerOptions final
    bool skip_comments   = true;
 };
 
-struct Scanner final
+class Scanner final
 {
  private:
    size_t position_ = 0; //!< The position in the token stack

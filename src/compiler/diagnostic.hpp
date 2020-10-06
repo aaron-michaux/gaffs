@@ -5,7 +5,7 @@
 
 namespace giraffe
 {
-struct CompilerContext;
+class CompilerContext;
 
 struct Diagnostic final
 {
@@ -20,7 +20,7 @@ struct Diagnostic final
    static constexpr auto k_color_none   = string_view("\x1b[0m");
    static constexpr auto k_light_green  = string_view("\x1b[92m");
    static constexpr auto k_level_colors = to_array<string_view>(
-       {"\x1b[0m", "\x1b[34m", "\x1b[93m", "\x1b[91m", "\x1b[41m\x1b[97m"});
+       {"\x1b[0m", "\x1b[34m", "\x1b[33m", "\x1b[91m", "\x1b[41m\x1b[97m"});
    static constexpr auto k_level_names
        = to_array<string_view>({"none", "info", "warning", "error", "fatal"});
 

@@ -14,6 +14,9 @@ class ElementNode final : public AstNode
    Token suffix_ = {}; // '*' | '+' | '?'
 
  public:
+   ElementNode()
+       : AstNode(NodeType::ELEMENT)
+   {}
    virtual ~ElementNode() = default;
 
    bool is_string() const noexcept { return token_.id() == TSTRING; }
@@ -25,15 +28,25 @@ class ElementNode final : public AstNode
    bool is_plus() const noexcept { return suffix_.id() == TPLUS; }
    bool is_question() const noexcept { return suffix_.id() == TQUESTION; }
 
+   /// An `optional` element may, or may not, appear 0 or more times.
+   /// That is, it's a `*` or `?` element
+   bool is_optional() const noexcept { return is_star() || is_question(); }
+
+   const auto& token() const noexcept { return token_; }
+
    void set_token(const Token& token) noexcept { token_ = token; }
    void set_suffix(const Token& token) noexcept { suffix_ = token; }
 
+   ElementListNode* element_list() noexcept
+   {
+      assert(size() == 1);
+      return cast_child_<ElementListNode>(0);
+   }
+
    const ElementListNode* element_list() const noexcept
    {
-      assert(size() == 0 || size() == 1);
-      return (size() == 0)
-                 ? nullptr // parse errors can cause this
-                 : reinterpret_cast<const ElementListNode*>(children()[0]);
+      assert(size() == 1);
+      return cast_child_<const ElementListNode>(0);
    }
 
    std::ostream& stream(std::ostream& ss,

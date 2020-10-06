@@ -12,18 +12,32 @@ class RuleNode final : public AstNode
  private:
    Token identifier_ = {};
 
+   vector<string_view> first_set_  = {}; // Tokens the rule can start with
+   vector<string_view> follow_set_ = {}; // Tokens that can follow the rule
+
  public:
+   RuleNode()
+       : AstNode(NodeType::RULE)
+   {}
    virtual ~RuleNode() = default;
 
    const Token& identifier() const noexcept { return identifier_; }
 
    void set_identifier(const Token& id) noexcept { identifier_ = id; }
 
+   ElementListNode* element_list(size_t index) noexcept
+   {
+      return cast_child_<ElementListNode>(index);
+   }
+
    const ElementListNode* element_list(size_t index) const noexcept
    {
-      assert(index < size());
-      return reinterpret_cast<const ElementListNode*>(children()[index]);
+      return cast_child_<const ElementListNode>(index);
    }
+
+   // auto& first_set_  = {}; // Tokens the rule can start with
+   // auto& final_set_  = {}; // Tokens the rule can end with
+   // auto& follow_set() noexcept { return follow_set_; }
 
    std::ostream& stream(std::ostream& ss,
                         string_view buffer) const noexcept override
@@ -47,4 +61,5 @@ class RuleNode final : public AstNode
       return ss;
    }
 };
+
 } // namespace giraffe

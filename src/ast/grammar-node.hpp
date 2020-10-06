@@ -10,12 +10,19 @@ namespace giraffe
 class GrammarNode final : public AstNode
 {
  public:
+   GrammarNode()
+       : AstNode(NodeType::GRAMMAR)
+   {}
    virtual ~GrammarNode() = default;
+
+   RuleNode* rule(size_t index) noexcept
+   {
+      return cast_child_<RuleNode>(index);
+   }
 
    const RuleNode* rule(size_t index) const noexcept
    {
-      assert(index < size());
-      return reinterpret_cast<const RuleNode*>(children()[index]);
+      return cast_child_<const RuleNode>(index);
    }
 
    std::ostream& stream(std::ostream& ss,
