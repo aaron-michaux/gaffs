@@ -16,4 +16,4 @@ unique_ptr<GrammarNode> parse(CompilerContext& context) noexcept
       return unique_ptr<GrammarNode>(accept_grammar(context));
    return make_unique<GrammarNode>();
 }
-}; // namespace giraffe
+} // namespace giraffe

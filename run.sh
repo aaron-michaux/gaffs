@@ -28,6 +28,8 @@ TARGET_FILE="$TARGET_FILE0"
 while [ "$#" -gt "0" ] ; do
     # Compiler
     [ "$1" = "clang" ]     && TOOLCHAIN="clang-11.0.0" && shift && continue
+    [ "$1" = "llvm" ]      && TOOLCHAIN="llvm-11.0.0" && shift && continue
+    [ "$1" = "gcc" ]       && TOOLCHAIN="gcc-10.2.0" && shift && continue
 
     # Configuration
     [ "$1" = "debug" ]     && CONFIG=debug && shift && continue
@@ -59,6 +61,12 @@ done
 if [ "${TOOLCHAIN:0:5}" = "clang" ] ; then
     export TOOL=clang
     export TOOL_VERSION="${TOOLCHAIN:6}"
+elif [ "${TOOLCHAIN:0:4}" = "llvm" ] ; then
+    export TOOL=llvm
+    export TOOL_VERSION="${TOOLCHAIN:5}"
+elif [ "${TOOLCHAIN:0:3}" = "gcc" ] ; then
+    export TOOL=gcc
+    export TOOL_VERSION="${TOOLCHAIN:4}"
 else
     echo "Unsupported toolchain: ${TOOLCHAIN}"
     exit 1
@@ -87,67 +95,19 @@ export SRC_DIRECTORIES="src"
 
 mkdir -p "$(dirname "$TARGET")"
 
-case $CONFIG in
-    release)
-        export O_FLAG="-O3"
-        export C_FLAGS="\$c_w_flags \$f_flags \$r_flags"
-        export CPP_FLAGS="\$w_flags \$f_flags \$r_flags"
-        export LINK_FLAGS="\$l_flags"
-        ;;
-
-    debug)
-        export O_FLAG="-O0"
-        export C_FLAGS="\$c_w_flags \$f_flags \$d_flags \$gdb_flags"
-        export CPP_FLAGS="\$w_flags \$f_flags \$d_flags \$gdb_flags"
-        export LINK_FLAGS="\$l_flags"
-        ;;
-
-    asan)
-        export O_FLAG="-O0"
-        export C_FLAGS="\$c_w_flags \$f_flags \$d_flags \$asan_flags"
-        export CPP_FLAGS="\$w_flags \$f_flags \$d_flags \$asan_flags"
-        export LINK_FLAGS="\$l_flags \$asan_link"
-        ;;
-
-    usan)
-        export O_FLAG="-O0"
-        export C_FLAGS="\$c_w_flags \$f_flags \$s_flags \$usan_flags"
-        export CPP_FLAGS="\$w_flags \$f_flags \$s_flags \$usan_flags"
-        export LINK_FLAGS="\$l_flags \$usan_link"
-        ;;
-
-    tsan)
-        export O_FLAG="-O0"
-        export C_FLAGS="\$c_w_flags \$f_flags \$s_flags \$usan_flags"
-        export CPP_FLAGS="\$w_flags \$f_flags \$s_flags \$usan_flags"
-        export LINK_FLAGS="\$l_flags \$tsan_link"
-        ;;
-
-    analyze)
-        ! [ "$TOOLCHAIN" = "clang-trunk" ] \
-            echo "Static analysis is only supported with clang." && \
-            exit 1
-        export O_FLAG="-O2"
-        export C_FLAGS="\$c_w_flags \$f_flags \$r_flags"
-        export CPP_FLAGS="\$c_flags"
-        export LINK_FLAGS="\$l_flags"
-        ;;
-    
-    *)
-        echo "Unexpected config=$CONFIG, aborting"
-        exit 1
-    ;;
-esac
+export C_FLAGS="\$c_${CONFIG}_flags"
+export CPP_FLAGS="\$cpp_${CONFIG}_flags"
+export LINK_FLAGS="\$${CONFIG}_link"
 
 if [ "$LTO" = "1" ] ; then
-    export C_FLAGS="$TC_LTO_FLAG $C_FLAGS"
-    export CPP_FLAGS="$TC_LTO_FLAG $CPP_FLAGS"
-    export LINK_FLAGS="$TC_LTO_LINK $LINK_FLAGS"
+    export C_FLAGS="\$lto_flags $C_FLAGS"
+    export CPP_FLAGS="\$lto_flags $CPP_FLAGS"
+    export LINK_FLAGS="\$lto_link $LINK_FLAGS"
 fi
 
 if [ "$BUILD_TESTS" = "1" ] ; then
     export SRC_DIRECTORIES="${SRC_DIRECTORIES} testcases"
-    export C_FLAGS="${CPP_FLAGS} -DCATCH_BUILD"
+    export C_FLAGS="${C_FLAGS} -DCATCH_BUILD"
     export CPP_FLAGS="${CPP_FLAGS} -DCATCH_BUILD"
 fi
 
@@ -158,7 +118,7 @@ fi
 
 if [ "$BENCHMARK" = "1" ] ; then
     export SRC_DIRECTORIES="${SRC_DIRECTORIES} benchmark"
-    export C_FLAGS="${CPP_FLAGS} -DBENCHMARK_BUILD"
+    export C_FLAGS="${C_FLAGS} -DBENCHMARK_BUILD"
     export CPP_FLAGS="${CPP_FLAGS} -DBENCHMARK_BUILD"
     export LINK_FLAGS="-lpthread -L/usr/local/lib -lbenchmark ${LINK_FLAGS}"
 fi

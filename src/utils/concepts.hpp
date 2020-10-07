@@ -3,7 +3,11 @@
 
 #include <type_traits>
 
-#if defined __GLIBCXX__ && __GLIBCXX__ <= 20200422
+#if(defined __GLIBCXX__ && __GLIBCXX__ <= 20200422) || defined _LIBCPP_VERSION
+#define USE_CONCEPT_FILLER__
+#endif
+
+#ifdef USE_CONCEPT_FILLER__
 namespace std
 {
 template<class T> concept integral        = is_integral_v<T>;
@@ -40,7 +44,4 @@ template<class T>
 concept move_constructible = constructible_from<T, T>&& convertible_to<T, T>;
 
 } // namespace std
-#else
-#error \
-    "update include guards... see if we have concepts in libstdc++, or libc++"
 #endif

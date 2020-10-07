@@ -13,9 +13,8 @@ user_link  =
 
 pchfile    = src/stdinc.hpp
 cpp_std    = -std=c++20
-o_flag     = ${O_FLAG}
 c_flags    = ${C_FLAGS} $user_flags
-cpp_flags  = $cpp_std -Werror ${CPP_FLAGS} $user_flags
+cpp_flags  = $cpp_std ${CPP_FLAGS} -Werror $user_flags
 
 link_exec_flags = ${LINK_FLAGS} $user_link
 
@@ -34,7 +33,6 @@ include ${MOBIUSDIR}/rules.ninja
 - *.c                   build $builddir/%.o:       c_rule ^
 - *.l                   build $builddir/%.o:       flex_rule ^
 - */gen*_c.sh           build $builddir/%.o:       gen_c_rule ^
-
 
 # ----------------------------------------------------------------------- Target
 

@@ -238,8 +238,6 @@ static void get_initial_first_final_sets(PassContext& pctx)
       /// Examine an adjacent pair for (C) above. `ii`, and `jj` are iterators
       auto process_elem_pair = [&](auto ii, auto jj) {
          auto elem_list = cast_ast_node<ElementListNode>((*ii)->parent());
-         auto elem_i    = cast_ast_node<ElementNode>(*ii);
-         auto elem_j    = cast_ast_node<ElementNode>(*jj);
          auto rr        = std::make_reverse_iterator(std::next(ii));
          auto rr_end    = std::make_reverse_iterator(ii);
 
