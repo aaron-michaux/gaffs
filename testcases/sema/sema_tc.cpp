@@ -5,7 +5,7 @@
 
 #include "stdinc.hpp"
 
-#include "compiler/compiler-context.hpp"
+#include "driver/compiler-context.hpp"
 #include "parser/parser.hpp"
 #include "scanner/scanner.hpp"
 #include "sema/sema.hpp"
@@ -31,25 +31,45 @@ CATCH_TEST_CASE("Sema", "[sema]")
 {
    // This code should just finish without tripping the memory sanitizer
    CATCH_SECTION("sema")
-   { //
-      TRACE("Hello Sema!");
-
+   {
       if(false) {
          Scanner tokens(test_str_sema_0);
          while(tokens.has_next())
             cout << tokens.consume().to_string(tokens.current_buffer()) << endl;
       }
 
-      CompilerContext context = make_compiler_context(test_str_sema_0);
-      auto ast                = parse(context);
-      auto global_scope       = build_symbol_table(context, ast.get());
+      auto context = make_compiler_context(test_str_sema_0);
+      assert(context != nullptr);
 
-      calculate_first_final_follow_sets(context, global_scope.get(), ast.get());
+      auto ast = parse(*context);
 
-      ast->stream(cout, context.tokens.current_buffer());
-      context.stream(cout);
-      cout << '\n';
-      global_scope->stream(cout);
+      // Calculculate the global scope
+      ast->set_scope(build_symbol_table(*context, ast.get()));
+
+      // Finst/final/follow sets
+      calculate_first_final_follow_sets(*context, ast.get());
+
+      // LL (i.e., parse) rules
+      calculate_ll_rules(*context, ast.get());
+
+      if(false) { // Output some nice friendly stuff
+         cout << '\n';
+         ast->scope()->stream(cout);
+         ast->stream(cout, context->tokens.current_buffer());
+
+         for(AstNode* r_node : *ast) {
+            auto rule      = cast_ast_node<RuleNode>(r_node);
+            auto print_set = [&](auto& set) {
+               return implode(cbegin(set), cend(set), ", ");
+            };
+            cout << format("Rule: {}\n", text(*context, rule->identifier()));
+            cout << format("   first Set:  {}\n", print_set(rule->first_set()));
+            cout << format("   final Set:  {}\n", print_set(rule->final_set()));
+            cout << format("   follow Set: {}\n",
+                           print_set(rule->follow_set()));
+            cout << endl;
+         }
+      }
    }
 }
 

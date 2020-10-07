@@ -9,11 +9,18 @@ namespace giraffe
 //
 class GrammarNode final : public AstNode
 {
+ private:
+   unique_ptr<Scope> scope_ = nullptr; // Should be the global scope
+
  public:
    GrammarNode()
        : AstNode(NodeType::GRAMMAR)
    {}
    virtual ~GrammarNode() = default;
+
+   Scope* scope() noexcept { return scope_.get(); }
+   const Scope* scope() const noexcept { return scope_.get(); }
+   void set_scope(unique_ptr<Scope>&& o) noexcept { scope_ = std::move(o); }
 
    RuleNode* rule(size_t index) noexcept
    {

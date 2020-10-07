@@ -12,7 +12,7 @@ std::ostream& This::stream(std::ostream& ss,
 {
    static constexpr auto sentence_ends = to_array<char>({'.', '!', '?'});
 
-   const bool use_color = context.options.color_diagnostics;
+   const bool use_color = context.compiler_opts.color_diagnostics;
 
    ss << context.names.at(location.key);
    ss << ": ";

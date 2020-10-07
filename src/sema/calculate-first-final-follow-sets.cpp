@@ -1,19 +1,11 @@
 
 #include "ast/ast.hpp"
 #include "calculate-first-final-follow-sets.hpp"
-#include "compiler/compiler-context.hpp"
+#include "driver/compiler-context.hpp"
 #include "symbol-table.hpp"
 
 namespace giraffe
 {
-template<typename Iter> struct is_reverse_iterator : std::false_type
-{};
-
-template<typename Iter>
-struct is_reverse_iterator<std::reverse_iterator<Iter>>
-    : std::integral_constant<bool, !is_reverse_iterator<Iter>::value>
-{};
-
 template<typename InputItr, typename F>
 static void find_elem_set(InputItr bb, // begin of range, pass reverse
                           InputItr ee, // end of range, iterators if necessary
@@ -40,13 +32,6 @@ template<typename U, typename V> static void append(U& dst, const V& src)
    dst.insert(end(dst), cbegin(src), cend(src));
 }
 
-template<typename InputIt, typename F>
-static void for_each_adjacent_pair(InputIt bb, InputIt ee, F&& f)
-{
-   if(bb == ee) return; // empty
-   for(auto ii = bb, jj = std::next(bb); jj != ee; ++ii, ++jj) f(ii, jj);
-}
-
 } // namespace giraffe
 
 namespace giraffe::find_first_final_follow_sets_pass
@@ -61,14 +46,12 @@ struct FFFSets
 struct PassContext
 {
    CompilerContext& context;
-   Scope* symbols;
    GrammarNode* grammar;
 
    vector<FFFSets> sets;
 
-   PassContext(CompilerContext& ctx, Scope* s, GrammarNode* g)
+   PassContext(CompilerContext& ctx, GrammarNode* g)
        : context(ctx)
-       , symbols(s)
        , grammar(g)
    {
       sets.resize(g->size());
@@ -76,11 +59,11 @@ struct PassContext
 };
 
 /// Find the first and final sets of each rule, WITHOUT expanding any rules
-static void get_initial_first_final_sets(PassContext& pctx)
+static void calculate(PassContext& pctx)
 {
    auto& context = pctx.context;
    auto grammar  = pctx.grammar;
-   auto scope    = pctx.symbols;
+   auto scope    = pctx.grammar->scope();
 
    auto symbol_of = [scope, &context](const ElementNode* elem) {
       const auto name = text(context, elem->token());
@@ -275,17 +258,24 @@ static void get_initial_first_final_sets(PassContext& pctx)
       }
    }
 
+   // Finally: update the first/final/follow sets in the AST.
    for(AstNode* r_node : *grammar) {
       auto rule  = cast_ast_node<RuleNode>(r_node);
       auto& sets = pctx.sets.at(rule->index_in_parent());
 
-      auto print_set
-          = [&](auto& set) { return implode(cbegin(set), cend(set), ", "); };
-      TRACE(format("Rule: {}", text(context, rule->identifier())));
-      cout << format("First Set:  {}\n", print_set(sets.first_set));
-      cout << format("Final Set:  {}\n", print_set(sets.final_set));
-      cout << format("Follow Set: {}\n", print_set(sets.follow_set));
-      cout << endl;
+      rule->set_first_set(sets.first_set);
+      rule->set_final_set(sets.final_set);
+      rule->set_follow_set(sets.follow_set);
+
+      if(false) {
+         auto print_set
+             = [&](auto& set) { return implode(cbegin(set), cend(set), ", "); };
+         TRACE(format("Rule: {}", text(context, rule->identifier())));
+         cout << format("First Set:  {}\n", print_set(sets.first_set));
+         cout << format("Final Set:  {}\n", print_set(sets.final_set));
+         cout << format("Follow Set: {}\n", print_set(sets.follow_set));
+         cout << endl;
+      }
    }
 }
 
@@ -296,19 +286,16 @@ namespace giraffe
 // ------------------------------------------- calculate first final follow sets
 
 void calculate_first_final_follow_sets(CompilerContext& context,
-                                       Scope* global_symbols,
                                        GrammarNode* grammar) noexcept
 {
-   auto pctx = find_first_final_follow_sets_pass::PassContext{
-       context, global_symbols, grammar};
+   if(grammar->scope() == nullptr) {
+      FATAL(format("must build the symbol table before calculating "
+                   "first/final/follow sets"));
+   }
+
+   auto pctx = find_first_final_follow_sets_pass::PassContext{context, grammar};
 
    // Get the first/final sets, without expanding rules...
-   find_first_final_follow_sets_pass::get_initial_first_final_sets(pctx);
-
-   // auto pass_context = find_first_final_follow_sets_pass::PassContext{
-   //     context, global_symbols, grammar, {}};
-
-   // find_first_final_follow_sets_pass::process_grammar(pass_context);
+   find_first_final_follow_sets_pass::calculate(pctx);
 }
-
 } // namespace giraffe

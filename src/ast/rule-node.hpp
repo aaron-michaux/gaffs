@@ -13,6 +13,7 @@ class RuleNode final : public AstNode
    Token identifier_ = {};
 
    vector<string_view> first_set_  = {}; // Tokens the rule can start with
+   vector<string_view> final_set_  = {}; // Tokens that can end the rule
    vector<string_view> follow_set_ = {}; // Tokens that can follow the rule
 
  public:
@@ -35,9 +36,13 @@ class RuleNode final : public AstNode
       return cast_child_<const ElementListNode>(index);
    }
 
-   // auto& first_set_  = {}; // Tokens the rule can start with
-   // auto& final_set_  = {}; // Tokens the rule can end with
-   // auto& follow_set() noexcept { return follow_set_; }
+   const auto& first_set() const noexcept { return first_set_; }
+   const auto& final_set() const noexcept { return final_set_; }
+   const auto& follow_set() const noexcept { return follow_set_; }
+
+   void set_first_set(auto set) noexcept { first_set_ = std::move(set); }
+   void set_final_set(auto set) noexcept { final_set_ = std::move(set); }
+   void set_follow_set(auto set) noexcept { follow_set_ = std::move(set); }
 
    std::ostream& stream(std::ostream& ss,
                         string_view buffer) const noexcept override

@@ -2,7 +2,7 @@
 #pragma once
 
 #include "ast/ast.hpp"
-#include "compiler/compiler-context.hpp"
+#include "driver/compiler-context.hpp"
 #include "scanner/scanner.hpp"
 
 #include "skip-to-sequence.hpp"

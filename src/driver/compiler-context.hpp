@@ -1,25 +1,20 @@
 
 #pragma once
 
+#include "compiler-options.hpp"
 #include "diagnostic.hpp"
 #include "scanner/scanner.hpp"
-//#include "symbol-table.hpp"
 
 namespace giraffe
 {
 struct Token;
-
-struct CompilerOptions final
-{
-   ScannerOptions scanner_options = {};
-   bool color_diagnostics         = true;
-   bool w_error                   = false;
-};
+class Scope;
 
 class CompilerContext final
 {
  public:
-   CompilerOptions options = {};
+   ScannerOptions scanner_opts   = {};
+   CompilerOptions compiler_opts = {};
 
    vector<string> names = {}; // names of parsed texts (normally filenames)
    vector<string> texts = {}; // the texts being scanned
@@ -38,8 +33,11 @@ class CompilerContext final
 // So you want to get the text of a token...
 string_view text(const CompilerContext&, const Token& token) noexcept;
 
-CompilerContext make_compiler_context(string_view text,
-                                      CompilerOptions opts = {});
+unique_ptr<CompilerContext> make_compiler_context(string_view text,
+                                                  CompilerOptions opts = {});
+unique_ptr<CompilerContext> make_compiler_context(vector<string>&& names,
+                                                  vector<string>&& texts,
+                                                  CompilerOptions opts = {});
 
 void push_error(CompilerContext& context,
                 SourceLocation location,
@@ -54,5 +52,7 @@ void push_warn(CompilerContext& context,
 
 // Uses the location of the current token
 void push_warn(CompilerContext& context, string&& message) noexcept;
+
+bool execute(CompilerContext& context) noexcept;
 
 } // namespace giraffe

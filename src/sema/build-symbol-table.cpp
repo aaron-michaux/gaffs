@@ -1,7 +1,7 @@
 
 #include "ast/ast.hpp"
 #include "build-symbol-table.hpp"
-#include "compiler/compiler-context.hpp"
+#include "driver/compiler-context.hpp"
 #include "symbol-table.hpp"
 #include "utils/case-check.hpp"
 

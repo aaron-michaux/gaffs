@@ -2,6 +2,7 @@
 #pragma once
 
 #include "scanner/token.hpp"
+#include "sema/symbol-table.hpp"
 
 namespace giraffe
 {

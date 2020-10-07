@@ -1,16 +1,11 @@
 
 #pragma once
 
+#include "scanner-options.hpp"
 #include "token.hpp"
 
 namespace giraffe
 {
-struct ScannerOptions final
-{
-   bool skip_whitespace = true;
-   bool skip_comments   = true;
-};
-
 class Scanner final
 {
  private:
