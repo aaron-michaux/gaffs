@@ -119,6 +119,12 @@ template<std::derived_from<AstNode> T> T* cast_ast_node(AstNode* o) noexcept
    return ret;
 }
 
+template<std::derived_from<AstNode> T>
+const T* cast_ast_node(const AstNode* o) noexcept
+{
+   return cast_ast_node<T>(const_cast<AstNode*>(o));
+}
+
 // ------------------------------------------------- recursively visit all nodes
 
 template<std::derived_from<AstNode> T, // T must be a subclass of AstNode

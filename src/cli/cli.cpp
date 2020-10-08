@@ -10,6 +10,8 @@
 
 #include "cli.hpp"
 
+#include "cli-args.hpp"
+
 #include "driver/compiler-context.hpp"
 
 namespace giraffe
@@ -40,7 +42,10 @@ void show_help(char* argv0) noexcept
    Usage: {} [OPTIONS...] <filename>
 
    Options:
- 
+
+      -start <rulename>           Use <rulename> as the starting rule.
+                                  Otherwise the first rule is used. 
+
       -Werror                     Treat warnings as errors.
 
       -fno-color-diagnostics      Turn off color diagnostics.
@@ -71,7 +76,9 @@ CliConfig parse_command_line(int argc, char** argv) noexcept
    for(auto i = 1; i < argc; ++i) {
       string_view arg = argv[i];
       try {
-         if(arg == "-Werror")
+         if(arg == "-start")
+            config.start_rule = cli::safe_arg_str(argc, argv, i);
+         else if(arg == "-Werror")
             config.compiler_opts.w_error = true;
          else if(arg == "-fno-color-diagnostics")
             no_color_diagnostics = true;

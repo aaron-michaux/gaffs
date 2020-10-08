@@ -32,12 +32,6 @@ CATCH_TEST_CASE("Sema", "[sema]")
    // This code should just finish without tripping the memory sanitizer
    CATCH_SECTION("sema")
    {
-      if(false) {
-         Scanner tokens(test_str_sema_0);
-         while(tokens.has_next())
-            cout << tokens.consume().to_string(tokens.current_buffer()) << endl;
-      }
-
       auto context = make_compiler_context(test_str_sema_0);
       assert(context != nullptr);
 

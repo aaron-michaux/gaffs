@@ -100,9 +100,16 @@ const Symbol* This::lookup_recursive(string_view key) const noexcept
 std::ostream& This::stream(std::ostream& ss) const noexcept
 {
    auto f = [&ss](auto bb, auto ee) {
+      vector<decltype(vec_)::value_type> sorted(bb, ee);
+      std::sort(begin(sorted), end(sorted), [&](auto& A, auto& B) {
+         if(A.second.type != B.second.type)
+            return A.second.type < B.second.type;
+         return A.second.label < B.second.label;
+      });
+
       constexpr size_t align = 7;
-      for(auto ii = bb; ii != ee; ++ii) {
-         const auto& symbol = ii->second;
+      for(const auto& ii : sorted) {
+         const auto& symbol = ii.second;
 
          const string_view type_s = str(symbol.type);
          assert(type_s.size() <= align);

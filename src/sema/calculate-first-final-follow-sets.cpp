@@ -2,40 +2,16 @@
 #include "ast/ast.hpp"
 #include "calculate-first-final-follow-sets.hpp"
 #include "driver/compiler-context.hpp"
+#include "sema-helpers.hpp"
 #include "symbol-table.hpp"
 
-namespace giraffe
+namespace giraffe::find_first_final_follow_sets_pass
 {
-template<typename InputItr, typename F>
-static void find_elem_set(InputItr bb, // begin of range, pass reverse
-                          InputItr ee, // end of range, iterators if necessary
-                          F&& callback) noexcept
-{
-   for(auto ii = bb; ii != ee; ++ii) {
-      assert((*ii)->type() == NodeType::ELEMENT);
-      ElementNode* elem = cast_ast_node<ElementNode>(*ii);
-      if(elem->is_element_list()) {
-         ElementListNode* elem_list = elem->element_list();
-         if constexpr(is_reverse_iterator<InputItr>::value)
-            find_elem_set(elem_list->rbegin(), elem_list->rend(), callback);
-         else
-            find_elem_set(elem_list->begin(), elem_list->end(), callback);
-      } else {
-         callback(elem);
-      }
-      if(!elem->is_optional()) break; // we're done
-   }
-}
-
 template<typename U, typename V> static void append(U& dst, const V& src)
 {
    dst.insert(end(dst), cbegin(src), cend(src));
 }
 
-} // namespace giraffe
-
-namespace giraffe::find_first_final_follow_sets_pass
-{
 struct FFFSets
 {
    vector<string_view> first_set;

@@ -12,7 +12,7 @@ namespace giraffe
 
 template<typename InputIt, typename F>
 std::string
-implode(InputIt first, InputIt last, const std::string_view glue, F f)
+implode(InputIt first, InputIt last, const std::string_view glue, F&& f)
 {
    std::stringstream stream("");
    bool start = true;

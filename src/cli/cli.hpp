@@ -11,6 +11,7 @@ struct CliConfig final
    bool has_error                = false;
    vector<string> fnames         = {};
    CompilerOptions compiler_opts = {};
+   string start_rule             = ""s;
 };
 
 CliConfig parse_command_line(int argc, char** argv) noexcept;
