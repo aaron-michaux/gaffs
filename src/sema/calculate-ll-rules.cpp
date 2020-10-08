@@ -295,6 +295,7 @@ static std::ostream& stream_node_address(std::ostream& ss,
       ss << ':' << node->index_in_parent();
       return ss;
    }
+   return ss;
 }
 
 static string element_label(CompilerContext& context, const ElementNode* elem)
