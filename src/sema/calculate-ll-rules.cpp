@@ -3,9 +3,8 @@
 #include "calculate-first-final-follow-sets.hpp"
 #include "driver/compiler-context.hpp"
 #include "sema-helpers.hpp"
-#include "symbol-table.hpp"
 
-namespace giraffe::find_ll_rules
+namespace giraffe::sema::find_ll_rules
 {
 static bool node_of_interest(const AstNode* node) noexcept
 {
@@ -36,6 +35,7 @@ class ParseGraph
    {
       const RuleNode* rule;
       vector<ParseNode*> first_set = {};
+      vector<ParseNode*> final_set = {};
    };
 
  private:
@@ -60,6 +60,7 @@ class ParseGraph
 
  public:
    void init(CompilerContext& context, GrammarNode* grammar) noexcept;
+   const auto& rules() const noexcept { return rules_; }
 };
 
 // ----------------------------------------------------------------- init-0-rule
@@ -91,25 +92,39 @@ void ParseGraph::init_0_rules_(GrammarNode* grammar) noexcept
          rule_parse_nodes.rule  = cast_ast_node<RuleNode>(rule_node);
          for(AstNode* el_node : *rule_node) {
             auto elem_list = cast_ast_node<ElementListNode>(el_node);
+
+            // The first sets
             find_elem_set(
                 begin(*elem_list), end(*elem_list), [&](ElementNode* elem) {
                    assert(lookup_.count(elem) == 1);
                    rule_parse_nodes.first_set.push_back(lookup_[elem]);
+                });
+
+            // The final sets
+            find_elem_set(
+                rbegin(*elem_list), rend(*elem_list), [&](ElementNode* elem) {
+                   assert(lookup_.count(elem) == 1);
+                   rule_parse_nodes.final_set.push_back(lookup_[elem]);
                 });
          }
       }
    }
 
    { // (2) Remove rules from their own expansion set
+      auto remove_it = [&](string_view rule_name, auto& set) {
+         set.erase(std::partition(
+                       begin(set),
+                       end(set),
+                       [&](auto ptr) { return get_name(ptr) != rule_name; }),
+                   end(set));
+      };
+
       for(auto& rule_parse_node : rules_) {
          const RuleNode* rule = rule_parse_node.rule;
          assert(rule != nullptr);
          auto rule_name = text(*context_, rule->identifier());
-         auto ii        = std::partition(
-             begin(rule_parse_node.first_set),
-             end(rule_parse_node.first_set),
-             [&](auto ptr) { return get_name(ptr) == rule_name; });
-         rule_parse_node.first_set.erase(ii, end(rule_parse_node.first_set));
+         remove_it(rule_name, rule_parse_node.first_set);
+         remove_it(rule_name, rule_parse_node.final_set);
       }
    }
 
@@ -121,7 +136,7 @@ void ParseGraph::init_0_rules_(GrammarNode* grammar) noexcept
                                 const vector<ParseNode*>& expansion) {
          auto ii
              = std::partition(begin(haystack), end(haystack), [&](auto ptr) {
-                  return get_name(ptr) == needle;
+                  return get_name(ptr) != needle;
                });
          if(ii != end(haystack)) {
             // We found the rule at least once, so remove the rule,
@@ -136,10 +151,18 @@ void ParseGraph::init_0_rules_(GrammarNode* grammar) noexcept
          // What rule are we dealing with?
          const RuleNode* rule = rule_parse_node.rule;
          auto rule_name       = text(*context_, rule->identifier());
-         const vector<ParseNode*>& expansion = rule_parse_node.first_set;
-         for(auto& other_rule_parse_nodes : rules_)
-            search_replace(
-                other_rule_parse_nodes.first_set, rule_name, expansion);
+
+         for(auto& other_rule_parse_nodes : rules_) {
+            // First sets
+            search_replace(other_rule_parse_nodes.first_set,
+                           rule_name,
+                           rule_parse_node.first_set);
+
+            // Final sets
+            search_replace(other_rule_parse_nodes.final_set,
+                           rule_name,
+                           rule_parse_node.final_set);
+         }
       };
 
       for(auto& rule_parse_node : rules_)
@@ -147,9 +170,11 @@ void ParseGraph::init_0_rules_(GrammarNode* grammar) noexcept
    }
 
    { // (4) Remove Duplicates
-      for(auto& rule_parse_nodes : rules_) {
-         remove_duplicates(rule_parse_nodes.first_set);
-         rule_parse_nodes.first_set.shrink_to_fit();
+      for(auto& rule_parse_node : rules_) {
+         remove_duplicates(rule_parse_node.first_set);
+         remove_duplicates(rule_parse_node.final_set);
+         rule_parse_node.first_set.shrink_to_fit();
+         rule_parse_node.final_set.shrink_to_fit();
       }
    }
 }
@@ -159,41 +184,82 @@ void ParseGraph::init_0_rules_(GrammarNode* grammar) noexcept
 void ParseGraph::init_1_elem_list_(ElementListNode* elem_list) noexcept
 {
    // `lhs` can transition to `rhs`
-   auto process_elem_elem = [&](ElementNode* lhs, ElementNode* rhs) {
+   auto process_elem_elem = [&](const ElementNode* lhs,
+                                const ElementNode* rhs) {
       assert(!lhs->is_element_list());
       assert(!rhs->is_element_list());
       assert(lookup_.count(lhs) == 1);
-      assert(lookup_.count(rhs) == 1);
-      lookup_[lhs]->children.push_back(lookup_[rhs]);
+      assert(elem_to_rule(lhs) == nullptr);
+
+      RuleNode* rhs_rule = elem_to_rule(rhs);
+      if(rhs_rule == nullptr) {
+         assert(lookup_.count(rhs) == 1);
+         lookup_[lhs]->children.push_back(lookup_[rhs]);
+      } else {
+         auto& first_set = rules_.at(rhs_rule->index_in_parent()).first_set;
+         for(auto first_node : first_set) {
+            auto rhs_elem = first_node->elem;
+            assert(!rhs_elem->is_element_list());
+            assert(elem_to_rule(rhs_elem) == nullptr);
+            assert(lookup_.count(rhs_elem) == 1);
+            lookup_[lhs]->children.push_back(lookup_[rhs_elem]);
+         }
+      }
    };
 
    // `lhs` can transition to a token in the range [ii, ee)
-   auto process_lhs_to_list = [&](ElementNode* lhs, auto ii, auto ee) {
+   auto process_atom_lhs_to_list = [&](const auto lhs, auto ii, auto ee) {
       assert(!lhs->is_element_list());
+      assert(elem_to_rule(lhs) == nullptr);
       find_elem_set(
           ii, ee, [&](ElementNode* rhs) { process_elem_elem(lhs, rhs); });
+   };
+
+   auto process_lhs_to_list = [&](const ElementNode* lhs, auto ii, auto ee) {
+      assert(!lhs->is_element_list());
+      RuleNode* rule = elem_to_rule(lhs);
+      if(rule == nullptr) {
+         process_atom_lhs_to_list(lhs, ii, ee);
+      } else {
+         // Find all possible `final` tokens in the rule.
+         // These become `lhs` for further search.
+         const auto& final_set = rules_.at(rule->index_in_parent()).final_set;
+         for(auto final_node : final_set)
+            process_atom_lhs_to_list(final_node->elem, ii, ee);
+      }
    };
 
    const auto ee = end(*elem_list);
    for(auto ii = begin(*elem_list); ii != ee; ++ii) {
       ElementNode* elem = cast_ast_node<ElementNode>(*ii);
-      if(!elem->is_element_list()) {
+      RuleNode* rule    = elem_to_rule(elem); // could be null
+
+      const bool is_list = elem->is_element_list();
+
+      if(!is_list) {
          // Find the successor nodes, from elem -> rhs
          process_lhs_to_list(elem, std::next(ii), ee);
-      } else {
+
+      } else if(is_list) {
+         // [1] Recursively process child list
          auto child_elem_list = elem->element_list();
-         init_1_elem_list_(child_elem_list); // Process the entire list
-         // Find all possible right-hand tokens of `child_elem_list`,
-         // which become lhs tokens
+         init_1_elem_list_(child_elem_list);
+
+         // [2] Now find all possible right-hand tokens of `child_elem_list`,
+         //     These tokens become the `lhs` tokens for further search...
          find_elem_set(child_elem_list->rbegin(),
                        child_elem_list->rend(),
                        [&](ElementNode* lhs) {
                           process_lhs_to_list(lhs, std::next(ii), ee);
                        });
+
+      } else {
+         // opps
+         assert(false);
       }
    }
 
-   // Remove duplicates "so far"...
+   // Remove duplicates...
    for(auto& node : nodes_) remove_duplicates(node.children);
 }
 
@@ -223,188 +289,90 @@ void ParseGraph::init(CompilerContext& context, GrammarNode* grammar) noexcept
    // Map rules to their ParseNodes
    init_0_rules_(grammar);
 
-   // Find all token->token transitions, without expanding rules...
+   // Find all token->token transitions, expanding rules...
    for(auto& rule_node : *grammar)
       for(auto& elem_list_node : *rule_node)
          init_1_elem_list_(cast_ast_node<ElementListNode>(elem_list_node));
 }
+
+// -------------------------------------------------------- traversing the graph
+
+template<typename F>
+static void traverse_worker(CompilerContext& context,
+                            ParseGraph::ParseNode* node,
+                            size_t current_depth,
+                            size_t max_depth,
+                            vector<string_view>& elem_seq,
+                            F&& callback)
+{
+   if(current_depth == max_depth) { // depth limit reached
+      callback(elem_seq);
+
+   } else if(node->children.size() == 0) { // a terminal
+      elem_seq.resize(current_depth);
+      callback(elem_seq);
+
+   } else { // recurse
+      elem_seq.push_back(text(context, node->elem->token()));
+      for(auto child : node->children) {
+         traverse_worker(
+             context, child, current_depth + 1, max_depth, elem_seq, callback);
+      }
+      elem_seq.pop_back();
+   }
+}
+
+template<typename F>
+static void traverse(CompilerContext& context,
+                     ParseGraph::ParseNode* node,
+                     size_t depth,
+                     F&& callback)
+{
+   vector<string_view> elem_seq;
+   elem_seq.reserve(depth);
+   traverse_worker(context, node, 0, depth, elem_seq, callback);
+   assert(elem_seq.empty());
+}
+
+// ------------------------------------------------------------- find parse tree
 
 static void find_parse_tree(CompilerContext& context,
                             GrammarNode* grammar) noexcept
 {
    ParseGraph graph;
    graph.init(context, grammar);
-}
 
-namespace detail
-{
-   template<typename InputItr, std::invocable<size_t, ElementNode*> F>
-   static void find_ll_k(InputItr bb,
-                         InputItr ee,
-                         size_t position, // were we're currently looking
-                         size_t k,        // how far to look
-                         F&& callback) noexcept
-   {
-      for(auto ii = bb; ii != ee && position < k; ++ii) {
-         ElementNode* elem = cast_ast_node<ElementNode>(*ii);
-         if(elem->is_element_list()) {
-            // TODO
-         } else {
-            callback(k, elem);
-            find_ll_k(std::next(ii), ee, position + 1, callback);
+   if(false) {
+      const int depth   = 1;
+      string_view delim = "\n              ";
+      for(auto& rule : graph.rules()) {
+         vector<vector<string_view>> first_sets;
+         for(auto pnode : rule.first_set) {
+            traverse(context, pnode, depth, [&](const auto& seq) {
+               first_sets.push_back(seq);
+            });
          }
-         if(!elem->is_optional()) break; // we're done
-      }
-   }
-} // namespace detail
 
-template<typename InputItr>
-static vector<vector<ElementNode*>>
-find_ll_k(InputItr bb, InputItr ee, size_t k) noexcept
-{
-   vector<vector<ElementNode*>> lists;
+         remove_duplicates(first_sets);
 
-   // for(auto ii = bb; ii != ee; ++ii) {
-   //    ElementNode* elem = cast_ast_node<ElementNode>(*ii);
-   //    if(elem->is_question()) {
-   //       // We accept, or skip
-   //    }
-   // }
+         cout << "Rule: " << text(context, rule.rule->identifier()) << '\n';
+         cout << "   First Set: ";
 
-   // lists.resize
-   // detail::find_ll_k(bb, ee, 0, k, callback);
-   return lists;
-}
-
-static std::ostream& stream_node_address(std::ostream& ss,
-                                         CompilerContext& context,
-                                         const AstNode* node)
-{
-   switch(node->type()) {
-   case NodeType::NONE: assert(false); return ss;
-   case NodeType::GRAMMAR: return ss;
-   case NodeType::RULE:
-      ss << text(context, cast_ast_node<RuleNode>(node)->identifier());
-      return ss;
-   case NodeType::ELEMENTLIST:
-      stream_node_address(ss, context, node->parent());
-      ss << ':' << node->index_in_parent();
-      return ss;
-   case NodeType::ELEMENT:
-      stream_node_address(ss, context, node->parent());
-      ss << ':' << node->index_in_parent();
-      return ss;
-   }
-   return ss;
-}
-
-static string element_label(CompilerContext& context, const ElementNode* elem)
-{
-   std::stringstream ss{""};
-   stream_node_address(ss, context, elem);
-   ss << ' ' << text(context, elem->token());
-   return ss.str();
-}
-
-template<std::invocable<AstNode*> F>
-inline void traversal(CompilerContext& context,
-                      const Scope* scope,
-                      AstNode* node,
-                      F&& f) noexcept
-{
-   auto visit_elem = [&](ElementNode* elem) {
-      if(elem->is_element_list()) {
-         for(AstNode* child : node->children())
-            traversal(context, scope, child, f);
-      } else if(elem->is_string()) {
-         f(elem);
-      } else if(elem->is_identifier()) {
-         auto symbol = scope->lookup(text(context, elem->token()));
-         assert(symbol != nullptr);
-         if(symbol->type == Type::RULE) {
-            auto rule = cast_ast_node<RuleNode>(symbol->node);
-            // MAY have a decision point...
-         } else if(symbol->type == Type::TOKEN) {
-            f(elem);
-         } else {
-            assert(false);
+         bool is_first = true;
+         for(auto set : first_sets) {
+            if(is_first) {
+               is_first = false;
+            } else {
+               cout << delim;
+            }
+            cout << "{ " << implode(cbegin(set), cend(set), ", ") << " }";
          }
-      } else {
-         assert(false);
+         cout << "\n\n";
       }
-
-      if(elem->has_suffix()) {
-         // MAY have a decision point
-      }
-   };
-
-   assert(node != nullptr);
-   switch(node->type()) {
-   case NodeType::NONE: assert(false); return;
-   case NodeType::GRAMMAR:
-      // Traverse the rules
-      for(AstNode* child : node->children())
-         traversal(context, scope, child, f);
-      return;
-   case NodeType::RULE:
-      // Start traversing the rule's element list... DECISION POINT
-      for(AstNode* child : node->children())
-         traversal(context, scope, child, f);
-      return;
-   case NodeType::ELEMENTLIST:
-      // Element lists are easy
-      for(AstNode* child : node->children())
-         traversal(context, scope, child, f);
-      return;
-   case NodeType::ELEMENT: visit_elem(cast_ast_node<ElementNode>(node)); return;
    }
 }
 
-// static void find_parse_tree(CompilerContext& context, GrammarNode* grammar)
-// {
-//    traversal(context, grammar->scope(), grammar, [&](AstNode* node) {
-//       if(node->type() == NodeType::ELEMENT) {
-//          auto elem = cast_ast_node<ElementNode>(node);
-//          if(!elem->is_element_list())
-//             cout << element_label(context, elem) << endl;
-//       }
-//       return true;
-//    });
-// }
-
-// static void find_decisions(CompilerContext& context, RuleNode* rule) noexcept
-// {
-//    // Where are the decision points?
-//    // [1] Every alternative in an element list
-//    // [2] In an element-list, every '?', '*', '+'... keeping in mind its
-//    context
-//    // And keep in mind that we can stumble upon ambiguities
-
-//    vector<string_view> expanded_rules;
-//    // parse_visit(rule,
-
-//    // auto elem_text = [&context](const ElementNode* elem) -> string_view {
-//    //    return text(context, elem->token());
-//    // };
-
-//    // cout << format("Rule: {}\n", text(context, rule->identifier()));
-//    // size_t counter = 0;
-//    // for(AstNode* elem_list_node : *rule) {
-//    //    auto lists = find_ll_k(begin(elem_list_node), end(elem_list_node),
-//    2);
-
-//    //    { // Some printing
-//    //       cout << format("   [{}]\n", counter++);
-//    //       for(const auto& list : lists) {
-//    //          cout << format("      {}\n",
-//    //                         implode(begin(list), end(list), ", ",
-//    elem_text));
-//    //       }
-//    //    }
-//    // }
-// }
-
-} // namespace giraffe::find_ll_rules
+} // namespace giraffe::sema::find_ll_rules
 
 namespace giraffe
 {
@@ -412,9 +380,7 @@ namespace giraffe
 
 void calculate_ll_rules(CompilerContext& context, GrammarNode* grammar) noexcept
 {
-   find_ll_rules::find_parse_tree(context, grammar);
-   // for(AstNode* rule : *grammar)
-   //    find_ll_rules::find_decisions(context, cast_ast_node<RuleNode>(rule));
+   sema::find_ll_rules::find_parse_tree(context, grammar);
 }
 
 } // namespace giraffe

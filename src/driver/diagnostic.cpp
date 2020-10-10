@@ -12,9 +12,9 @@ std::ostream& This::stream(std::ostream& ss,
 {
    static constexpr auto sentence_ends = to_array<char>({'.', '!', '?'});
 
-   const bool use_color = context.compiler_opts.color_diagnostics;
+   const bool use_color = context.compiler_opts().color_diagnostics;
 
-   ss << context.names.at(location.key);
+   ss << context.names().at(location.key);
    ss << ": ";
    if(use_color) { ss << k_level_colors.at(size_t(level)); }
    ss << k_level_names.at(size_t(level)) << ':';
@@ -23,7 +23,7 @@ std::ostream& This::stream(std::ostream& ss,
    if(message.size() > 0 && !in_list(message.back(), sentence_ends)) ss << '.';
    ss << '\n';
 
-   const auto text                   = context.texts.at(location.key);
+   const auto text                   = context.texts().at(location.key);
    const auto [line_start, line_end] = find_line(text, location.offset);
    assert(location.offset >= line_start);
    assert(location.offset <= line_end);

@@ -8,9 +8,9 @@
         else result = sz;                          \
     }
 
-#define TOKEN(TOK_ID) (lexx_token((TOK_ID), yyextra, yytext, yyleng, yylineno))
+#define TOKEN(TOK_ID) (lexx_token((TOK_ID), yyextra, yytext, yyleng, yylineno-1))
 
-int lexx_token(int token_id,
+static int lexx_token(int token_id,
                struct scanner_params_t* params,
                const char* text,
                int text_len,
@@ -61,12 +61,12 @@ NP      ([\x21-\x26])|([\x28-\x7f])|{WS}|{NL}
 
 %%
 
-void scanner_params_init(struct scanner_params_t* params)
+static void scanner_params_init(struct scanner_params_t* params)
 {
     memset(params, 0, sizeof(struct scanner_params_t));
 }
 
-void scanner_params_destroy(struct scanner_params_t* params)
+static void scanner_params_destroy(struct scanner_params_t* params)
 {
     free(params);
 }
@@ -85,18 +85,18 @@ extern yyscan_t init_scanner(FILE* fp)
     return scanner;
 }
 
-extern struct scanner_params_t* get_scanner_params(yyscan_t scanner)
-{
-    return yyget_extra(scanner);
-}
-
 extern void destroy_scanner(yyscan_t scanner)
 {
     scanner_params_destroy(yyget_extra(scanner));
     yylex_destroy(scanner);
 }
 
-int lexx_token(int token_id,
+extern struct scanner_params_t* get_scanner_params(yyscan_t scanner)
+{
+    return yyget_extra(scanner);
+}
+
+static int lexx_token(int token_id,
                struct scanner_params_t* params,
                const char* text,
                int text_len,

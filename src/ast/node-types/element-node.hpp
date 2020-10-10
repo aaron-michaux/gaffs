@@ -50,13 +50,12 @@ class ElementNode final : public AstNode
    }
 
    std::ostream& stream(std::ostream& ss,
-                        string_view buffer) const noexcept override
+                        const TokenTextFunctor& text) const noexcept override
    {
       if(is_element_list()) {
-         ss << "( " << PP{element_list(), buffer} << " )"
-            << suffix_.text(buffer);
+         ss << "( " << PP{element_list(), text} << " )" << text(suffix_);
       } else {
-         ss << token_.text(buffer) << suffix_.text(buffer);
+         ss << text(token_) << text(suffix_);
       }
       return ss;
    }

@@ -3,9 +3,8 @@
 #include "calculate-first-final-follow-sets.hpp"
 #include "driver/compiler-context.hpp"
 #include "sema-helpers.hpp"
-#include "symbol-table.hpp"
 
-namespace giraffe::find_first_final_follow_sets_pass
+namespace giraffe::sema::find_first_final_follow_sets_pass
 {
 template<typename U, typename V> static void append(U& dst, const V& src)
 {
@@ -35,11 +34,10 @@ struct PassContext
 };
 
 /// Find the first and final sets of each rule, WITHOUT expanding any rules
-static void calculate(PassContext& pctx)
+static void calculate(CompilerContext& context, GrammarNode* grammar)
 {
-   auto& context = pctx.context;
-   auto grammar  = pctx.grammar;
-   auto scope    = pctx.grammar->scope();
+   auto pctx  = PassContext{context, grammar};
+   auto scope = grammar->scope();
 
    auto symbol_of = [scope, &context](const ElementNode* elem) {
       const auto name = text(context, elem->token());
@@ -255,7 +253,7 @@ static void calculate(PassContext& pctx)
    }
 }
 
-} // namespace giraffe::find_first_final_follow_sets_pass
+} // namespace giraffe::sema::find_first_final_follow_sets_pass
 
 namespace giraffe
 {
@@ -269,9 +267,7 @@ void calculate_first_final_follow_sets(CompilerContext& context,
                    "first/final/follow sets"));
    }
 
-   auto pctx = find_first_final_follow_sets_pass::PassContext{context, grammar};
-
    // Get the first/final sets, without expanding rules...
-   find_first_final_follow_sets_pass::calculate(pctx);
+   sema::find_first_final_follow_sets_pass::calculate(context, grammar);
 }
 } // namespace giraffe

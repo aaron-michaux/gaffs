@@ -45,20 +45,20 @@ class RuleNode final : public AstNode
    void set_follow_set(auto set) noexcept { follow_set_ = std::move(set); }
 
    std::ostream& stream(std::ostream& ss,
-                        string_view buffer) const noexcept override
+                        const TokenTextFunctor& text) const noexcept override
    {
       constexpr const char* tab = "      ";
-      ss << identifier_.text(buffer) << ":";
+      ss << text(identifier_) << ":";
       switch(size()) {
       case 0: ss << " ;"; break;
-      case 1: ss << ' ' << PP{children()[0], buffer} << " ;"; break;
+      case 1: ss << ' ' << PP{children()[0], text} << " ;"; break;
       default:
          for(size_t i = 0; i < size(); ++i) {
             if(i == 0)
                ss << " ";
             else
                ss << '\n' << tab << "| ";
-            ss << PP{children()[i], buffer};
+            ss << PP{children()[i], text};
          }
          ss << '\n' << tab << ';';
       }

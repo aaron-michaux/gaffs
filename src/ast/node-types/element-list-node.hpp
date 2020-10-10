@@ -26,11 +26,11 @@ class ElementListNode final : public AstNode
    }
 
    std::ostream& stream(std::ostream& ss,
-                        string_view buffer) const noexcept override
+                        const TokenTextFunctor& text) const noexcept override
    {
       for(size_t i = 0; i < size(); ++i) {
          if(i > 0) ss << " ";
-         ss << PP{children()[i], buffer};
+         ss << PP{children()[i], text};
       }
       return ss;
    }

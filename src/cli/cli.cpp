@@ -142,7 +142,7 @@ init_compiler_context(const CliConfig& config) noexcept
    }
 
    return (has_error) ? nullptr
-                      : make_compiler_context(std::move(fnames),
+                      : CompilerContext::make(std::move(fnames),
                                               std::move(texts),
                                               config.compiler_opts);
 }

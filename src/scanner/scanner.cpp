@@ -13,7 +13,7 @@ namespace giraffe
 {
 // ---------------------------------------------------------------------- Worker
 
-struct This::Worker
+struct Scanner::Worker
 {
  private:
    size_t n_texts_                                    = 0;

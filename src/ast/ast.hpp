@@ -1,8 +1,11 @@
 
 #pragma once
 
-#include "ast-node.hpp"
-#include "element-list-node.hpp"
-#include "element-node.hpp"
-#include "grammar-node.hpp"
-#include "rule-node.hpp"
+#include "node-types/ast-node.hpp"
+
+#include "node-types/element-list-node.hpp"
+#include "node-types/element-node.hpp"
+#include "node-types/grammar-node.hpp"
+#include "node-types/rule-node.hpp"
+
+#include "scope.hpp"

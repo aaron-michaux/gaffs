@@ -1,5 +1,5 @@
 
-#include "symbol-table.hpp"
+#include "scope.hpp"
 
 #define This Scope
 

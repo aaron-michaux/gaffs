@@ -8,7 +8,7 @@ namespace giraffe
 
 GrammarNode* accept_grammar(CompilerContext& context) noexcept
 {
-   Scanner& tokens = context.tokens;
+   Scanner& tokens = context.scanner();
    auto grammar    = make_unique<GrammarNode>();
 
    assert(expect(tokens, first_set_grammar));
@@ -23,7 +23,7 @@ GrammarNode* accept_grammar(CompilerContext& context) noexcept
          rules.push_back(accept_rule(context));
 
       } else { // Syntax error
-         push_error(context, "expected a new rule"s);
+         context.push_error("expected a new rule"s);
 
          // recovery
          if(!recover_to_next_rule(tokens)) break; // we got nothing
@@ -36,7 +36,7 @@ GrammarNode* accept_grammar(CompilerContext& context) noexcept
       TRACE(format("got token {}, pos = {}",
                    token_id_to_str(tokens.current().id()),
                    tokens.position()));
-      push_error(context, "expected end-of-file");
+      context.push_error("expected end-of-file");
    }
 
    return grammar.release();

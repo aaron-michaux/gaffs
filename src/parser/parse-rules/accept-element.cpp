@@ -14,7 +14,7 @@ bool skip_past_element(Scanner& tokens) noexcept
 
 ElementNode* accept_element(CompilerContext& context) noexcept
 {
-   Scanner& tokens = context.tokens;
+   Scanner& tokens = context.scanner();
    assert(expect(tokens, first_set_element));
 
    auto elem = make_unique<ElementNode>();
@@ -40,7 +40,7 @@ ElementNode* accept_element(CompilerContext& context) noexcept
          }
       } else {
          elem->set_children({new ElementListNode});
-         push_error(context, "expected an `element list`"s);
+         context.push_error("expected an `element list`"s);
          if(!attempt_recovery()) return elem.release(); // outta here
       }
    }

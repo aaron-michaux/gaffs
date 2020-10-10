@@ -32,7 +32,7 @@ CATCH_TEST_CASE("Sema", "[sema]")
    // This code should just finish without tripping the memory sanitizer
    CATCH_SECTION("sema")
    {
-      auto context = make_compiler_context(test_str_sema_0);
+      auto context = CompilerContext::make(test_str_sema_0, {});
       assert(context != nullptr);
 
       auto ast = parse(*context);
@@ -49,7 +49,7 @@ CATCH_TEST_CASE("Sema", "[sema]")
       if(false) { // Output some nice friendly stuff
          cout << '\n';
          ast->scope()->stream(cout);
-         ast->stream(cout, context->tokens.current_buffer());
+         ast->stream(cout, context->curried_text_function());
 
          for(AstNode* r_node : *ast) {
             auto rule      = cast_ast_node<RuleNode>(r_node);

@@ -2,12 +2,11 @@
 #include "ast/ast.hpp"
 #include "build-symbol-table.hpp"
 #include "driver/compiler-context.hpp"
-#include "symbol-table.hpp"
 #include "utils/case-check.hpp"
 
 namespace giraffe
 {
-namespace build_symbol_table_pass
+namespace sema::build_symbol_table_pass
 {
    static void process_element(CompilerContext&, Scope*, ElementNode*);
    static void process_element_list(CompilerContext&, Scope*, ElementListNode*);
@@ -26,9 +25,8 @@ namespace build_symbol_table_pass
          assert(!label.empty());
          if(!scope->has(label)) {
             if(!is_uppercase_string(label)) {
-               push_warn(context,
-                         node->token().location(),
-                         "tokens should be uppercase!");
+               context.push_warn(node->token().location(),
+                                 "tokens should be uppercase!");
             }
             scope->insert(label, make_token_symbol(label));
          }
@@ -70,22 +68,21 @@ namespace build_symbol_table_pass
          const auto& id_tok = rule->identifier();
          string_view label  = text(context, id_tok);
          if(label.empty()) {
-            push_error(
-                context, id_tok.location(), "rule identifier cannot be empty!");
+            context.push_error(id_tok.location(),
+                               "rule identifier cannot be empty!");
          } else if(scope->has(label)) {
-            push_error(
-                context, id_tok.location(), "duplicate rule identifier!");
+            context.push_error(id_tok.location(), "duplicate rule identifier!");
          } else {
             if(!is_justified_string(label))
-               push_warn(context,
-                         id_tok.location(),
-                         "rule identifiers should be in Justified case");
+               context.push_warn(
+                   id_tok.location(),
+                   "rule identifiers should be in Justified case");
             scope->insert(label, make_rule_symbol(label, rule));
          }
       }
    }
 
-} // namespace build_symbol_table_pass
+} // namespace sema::build_symbol_table_pass
 
 unique_ptr<Scope> build_symbol_table(CompilerContext& context,
                                      GrammarNode* grammar) noexcept
@@ -97,10 +94,12 @@ unique_ptr<Scope> build_symbol_table(CompilerContext& context,
    // We want to intern all the rule names before considering other
    // symbols... because we want to be able to distinguish rules
    // even when they appear out of order.
-   build_symbol_table_pass::find_rule_names(context, scope.get(), grammar);
+   sema::build_symbol_table_pass::find_rule_names(
+       context, scope.get(), grammar);
 
    // Find all the other symbols
-   build_symbol_table_pass::process_grammar(context, scope.get(), grammar);
+   sema::build_symbol_table_pass::process_grammar(
+       context, scope.get(), grammar);
    return scope;
 }
 

@@ -31,7 +31,7 @@ CATCH_TEST_CASE("Scanner", "[scanner]")
    CATCH_SECTION("scanner")
    { //
       Scanner tokens(scanner_test_str_0);
-      if(false) {
+      if(true) {
          while(tokens.has_next())
             cout << tokens.consume().to_string(tokens.current_buffer()) << endl;
       }

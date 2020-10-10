@@ -1,8 +1,8 @@
 
 #pragma once
 
+#include "ast/scope.hpp"
 #include "scanner/token.hpp"
-#include "sema/symbol-table.hpp"
 
 namespace giraffe
 {
@@ -24,7 +24,7 @@ const char* str(NodeType) noexcept;
 // to assist in printing
 namespace detail
 {
-   using AstNodeSV = std::pair<const AstNode*, string_view>;
+   using AstNodeSV = std::pair<const AstNode*, const TokenTextFunctor&>;
 }
 
 // --------------------------------------------------------------------- AstNode
@@ -85,7 +85,8 @@ class AstNode
    size_t size() const noexcept { return children_.size(); }
    bool empty() const noexcept { return children_.empty(); }
 
-   virtual std::ostream& stream(std::ostream&, string_view) const noexcept = 0;
+   virtual std::ostream& stream(std::ostream&,
+                                const TokenTextFunctor&) const noexcept = 0;
 };
 
 // ------------------------------------------------------------------ operator<<

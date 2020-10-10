@@ -33,9 +33,9 @@ class GrammarNode final : public AstNode
    }
 
    std::ostream& stream(std::ostream& ss,
-                        string_view buffer) const noexcept override
+                        const TokenTextFunctor& text) const noexcept override
    {
-      for(const auto ptr : children()) ss << "\n" << PP{ptr, buffer};
+      for(const auto ptr : children()) ss << "\n" << PP{ptr, text};
       ss << "\n";
       return ss;
    }

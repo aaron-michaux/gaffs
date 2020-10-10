@@ -7,6 +7,9 @@
 
 namespace giraffe
 {
+struct Token;
+using TokenTextFunctor = std::function<string_view(const Token&)>;
+
 struct Token final
 {
  private:

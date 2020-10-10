@@ -7,7 +7,7 @@ namespace giraffe
 
 ElementListNode* accept_element_list(CompilerContext& context) noexcept
 {
-   Scanner& tokens = context.tokens;
+   Scanner& tokens = context.scanner();
    assert(expect(tokens, first_set_element_list));
 
    auto elem_list = make_unique<ElementListNode>();
@@ -21,7 +21,7 @@ ElementListNode* accept_element_list(CompilerContext& context) noexcept
          break; // we're done
 
       } else {
-         push_error(context, "expected `rule element`"s);
+         context.push_error("expected `rule element`"s);
          if(skip_past_element(tokens) && expect(tokens, first_set_element))
             continue; // try again
          break;
