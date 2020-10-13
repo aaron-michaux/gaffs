@@ -22,7 +22,7 @@ cleanup()
     fi    
 }
 
-# -------------------------------------------------- ensure subversion installed
+# ------------------------------------------------ ensure dependencies installed
 
 sudo apt-get install -y \
      wget subversion automake swig python2.7-dev libedit-dev libncurses5-dev \
@@ -56,14 +56,6 @@ build_clang()
     git checkout "$CLANG_V"
 
     cd "$BUILD_D"
-
-    # NOTE, to build lldb, may need to specify the python3
-    #       variables below, and something else for CURSES
-    # -DPYTHON_EXECUTABLE=/usr/bin/python3.6m \
-    # -DPYTHON_LIBRARY=/usr/lib/python3.6/config-3.6m-x86_64-linux-gnu/libpython3.6m.so \
-    # -DPYTHON_INCLUDE_DIR=/usr/include/python3.6m \
-    # -DCURSES_LIBRARY=/usr/lib/x86_64-linux-gnu/libncurses.a \
-    # -DCURSES_INCLUDE_PATH=/usr/include/ \
 
     nice ionice -c3 cmake -G "Ninja" \
          -DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libcxx;libcxxabi;libunwind;compiler-rt;lld;polly;lldb" \
