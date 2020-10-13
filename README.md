@@ -1,7 +1,7 @@
  
 # Grammar Analysis of First Follow Sets
 
-Gaffs is a tool for analyzing context free grammars.
+Gaffs is a tool for analyzing context free grammars. It will print out the first/follow sets of a grammar, and a few other bits of information.
 
 ## Building
 
