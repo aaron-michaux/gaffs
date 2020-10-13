@@ -8,7 +8,7 @@ OPT_ROOT=/opt/cc
 
 NO_CLEANUP=1
 if [ "$NO_CLEANUP" = "1" ] ; then
-    TMPD=/tmp/build-clang-gcc-boost
+    TMPD=/tmp/build-cc
     mkdir -p $TMPD
 else
     TMPD=$(mktemp -d /tmp/$(basename $0).XXXXXX)
