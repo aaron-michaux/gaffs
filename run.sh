@@ -22,6 +22,7 @@ BUILD_EXAMPLES=0
 LTO=0
 UNITY=0
 VALGRIND=0
+DO_INSTALL=0
 
 TARGET_FILE="$TARGET_FILE0"
 
@@ -52,6 +53,9 @@ while [ "$#" -gt "0" ] ; do
     [ "$1" = "no-lto" ]    && LTO=0 && shift && continue
     [ "$1" = "bench" ]     && BENCHMARK=1 && shift && continue
     [ "$1" = "examples" ]  && BUILD_EXAMPLES=1 && shift && continue
+
+    [ "$1" = "install" ]   && DO_INSTALL=1 \
+        && LTO=1 && UNITY=1 && CONFIG=release && shift && continue
     
     # Target
     [ "$1" = "build.ninja" ] && TARGET_FILE=build.ninja && shift && continue
@@ -158,7 +162,11 @@ NINJA_TARGET="$TARGET"
 
 # ---- If we're building the executable (TARGET_FILE0), then run it
 
-if [ "$TARGET_FILE" = "$TARGET_FILE0" ] ; then
+if [ "$DO_INSTALL" = "1" ] ; then
+
+    sudo cp "$PPWD/$TARGET" /usr/local/bin/
+       
+elif [ "$TARGET_FILE" = "$TARGET_FILE0" ] ; then
 
     export LSAN_OPTIONS="suppressions=$PPWD/project-config/lsan.supp"
     export ASAN_OPTIONS="protect_shadow_gap=0,detect_leaks=0"

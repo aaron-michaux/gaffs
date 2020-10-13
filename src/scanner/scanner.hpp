@@ -53,7 +53,7 @@ class Scanner final
    const Token& consume() noexcept;
 
    /// Get the token-id of the NEXT token
-   auto next_token_id() noexcept;
+   uint16_t next_token_id() noexcept;
 
    /// Look ahead `n` tokens, and return it, _without_ changing current position
    const Token& peek(size_t n = 1) noexcept;

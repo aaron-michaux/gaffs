@@ -166,7 +166,7 @@ bool execute(CompilerContext& context) noexcept // once set upt
       auto rule = cast_ast_node<RuleNode>(r_node);
       auto print_set
           = [&](auto& set) { return implode(cbegin(set), cend(set), ", "); };
-      cout << format("Rule: {}\n", text(context, rule->identifier()));
+      cout << format("{}:\n", text(context, rule->identifier()));
       cout << format("   first Set:  {}\n", print_set(rule->first_set()));
       cout << format("   final Set:  {}\n", print_set(rule->final_set()));
       cout << format("   follow Set: {}\n", print_set(rule->follow_set()));

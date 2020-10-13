@@ -1,0 +1,112 @@
+
+# Where cross-compiled libraries live... not used here
+arch=/opt/arch/clang-11.0.0
+
+# $ccdir/bin/clang  should be clang. Tested on clang 11.0.0
+ccdir=/opt/cc/clang-11.0.0
+
+# -------------------------------------------------------------------- Toolchain
+
+CC             = nice ionice -c3 $ccdir/bin/clang
+MOC            = moc
+RCC            = rcc
+cc_desc        = clang
+cpp_inc        = -fPIC -isystem$arch/include
+link_libcpp_so = -fuse-ld=lld -lm -lstdc++ -L$arch/lib -Wl,-rpath,$arch/lib
+link_libcpp_a  = -fuse-ld=lld -lm -lstdc++ -L$arch/lib -Wl,-rpath,$arch/lib
+gdb_flags      = -g3 -gdwarf-2 -fno-omit-frame-pointer -fno-optimize-sibling-calls
+w_flags        = -Wall -Wextra -Wpedantic -Winvalid-pch -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wno-unused-parameter -Woverloaded-virtual -Wconversion -Wsign-conversion -Wnull-dereference -Wdouble-promotion -Wno-c++98-compat -Wno-documentation-unknown-command -Wno-c++98-compat-pedantic -Wno-padded -Wno-unused-member-function -Wformat-nonliteral -Wno-reserved-id-macro -Wno-format-nonliteral -Wno-exit-time-destructors -Wno-global-constructors -Wno-missing-prototypes -Wno-shadow -Wno-documentation -Wno-unused-variable -Wno-unused-private-field
+c_w_flags      = -Wall -Wextra -Wpedantic -Winvalid-pch -Wcast-align -Wno-unused-parameter -Wconversion -Wsign-conversion -Wnull-dereference -Wdouble-promotion -Wno-documentation-unknown-command -Wno-c++98-compat-pedantic -Wno-padded -Wno-unused-member-function -Wformat-nonliteral -Wno-reserved-id-macro -Wno-format-nonliteral -Wno-exit-time-destructors -Wno-global-constructors -Wno-missing-prototypes -Wno-shadow -Wno-documentation -Wno-sign-conversion -Wno-conversion -Wno-cast-align -Wno-double-promotion
+d_flags        = -DDEBUG_BUILD
+r_flags        = -DRELEASE_BUILD -DNDEBUG
+o_flag         = -O3
+f_flags        = -fPIC -fdiagnostics-color=always -ferror-limit=4
+s_flags        = -g -fno-omit-frame-pointer -fno-optimize-sibling-calls
+l_flags        = -fuse-ld=lld -lm -lstdc++ -L$arch/lib -Wl,-rpath,$arch/lib
+ranlib         = $ccdir/bin/llvm-ranlib
+ar             = $ccdir/bin/llvm-ar
+lto_flags      = -flto=thin
+lto_link       = -flto=thin
+asan_flags     = -g3 -gdwarf-2 -DADDRESS_SANITIZE -fsanitize=address
+usan_flags     = -g3 -gdwarf-2 -DUNDEFINED_SANITIZE -fsanitize=undefined
+tsan_flags     = -g3 -gdwarf-2 -DTHREAD_SANITIZE -fsanitize=thread -fPIE
+prof_flags     = -DBENCHMARK_BUILD -fno-omit-frame-pointer -g
+prof_link      = -lbenchmark
+
+c_release_flags   = $o_flag  $f_flags $r_flags $c_w_flags
+cpp_release_flags = $o_flag $cpp_inc $f_flags $r_flags $w_flags
+release_link      = $l_flags
+
+c_debug_flags     = -O0 $f_flags $d_flags $gdb_flags $c_w_flags
+cpp_debug_flags   = -O0 $cpp_inc $f_flags $d_flags $gdb_flags $w_flags
+debug_link        = $l_flags
+
+c_asan_flags      = -O0  $f_flags $s_flags $asan_flags $c_w_flags
+cpp_asan_flags    = -O0 $cpp_inc $f_flags $s_flags $asan_flags $w_flags
+asan_link         = $l_flags -fsanitize=address
+
+c_usan_flags      = -O0  $f_flags $s_flags $usan_flags $c_w_flags
+cpp_usan_flags    = -O0 $cpp_inc $f_flags $s_flags $usan_flags $w_flags
+usan_link         = $l_flags -fsanitize=undefined -lubsan
+
+c_tsan_flags      = -O0  $f_flags $s_flags $tsan_flags $c_w_flags
+cpp_tsan_flags    = -O0 $cpp_inc $f_flags $s_flags $tsan_flags $w_flags
+tsan_link         = $l_flags -fsanitize=thread -fPIE
+
+# ---------------------------------------------------------------- Configuration
+
+target   = gaffs
+builddir = build/clang-11.0.0-asan/.tmp
+
+user_flags = -Isrc -Isrc/contrib -Isrc/contrib/fmt/include
+user_link  =
+
+pchfile    = src/stdinc.hpp
+cpp_std    = -std=c++20
+c_flags    = $c_asan_flags $user_flags
+cpp_flags  = $cpp_std $cpp_asan_flags -Wno-unused-function -Werror $user_flags
+
+link_exec_flags = $asan_link $user_link
+
+# ------------------------------------------------------------------------ Rules
+
+include project-config/toolchain-configs/rules.ninja
+
+# ------------------------------------------------------------------------ Build
+# Source files put into unity-build
+build $builddir/src/sema/calculate-first-final-follow-sets.o: cpp_pch src/sema/calculate-first-final-follow-sets.cpp | $builddir/$pchfile.gch
+build $builddir/src/sema/build-symbol-table.o: cpp_pch src/sema/build-symbol-table.cpp | $builddir/$pchfile.gch
+build $builddir/src/sema/calculate-ll-rules.o: cpp_pch src/sema/calculate-ll-rules.cpp | $builddir/$pchfile.gch
+build $builddir/src/contrib/fmt/src/posix.o: cpp src/contrib/fmt/src/posix.cc
+build $builddir/src/contrib/fmt/src/format.o: cpp src/contrib/fmt/src/format.cc
+build $builddir/src/driver/diagnostic.o: cpp_pch src/driver/diagnostic.cpp | $builddir/$pchfile.gch
+build $builddir/src/driver/compiler-context.o: cpp_pch src/driver/compiler-context.cpp | $builddir/$pchfile.gch
+build $builddir/src/parser/parser.o: cpp_pch src/parser/parser.cpp | $builddir/$pchfile.gch
+build $builddir/src/parser/parse-rules/accept-element.o: cpp_pch src/parser/parse-rules/accept-element.cpp | $builddir/$pchfile.gch
+build $builddir/src/parser/parse-rules/accept-element-list.o: cpp_pch src/parser/parse-rules/accept-element-list.cpp | $builddir/$pchfile.gch
+build $builddir/src/parser/parse-rules/accept-rule.o: cpp_pch src/parser/parse-rules/accept-rule.cpp | $builddir/$pchfile.gch
+build $builddir/src/parser/parse-rules/accept-grammar.o: cpp_pch src/parser/parse-rules/accept-grammar.cpp | $builddir/$pchfile.gch
+build $builddir/src/cli/cli-args.o: cpp_pch src/cli/cli-args.cpp | $builddir/$pchfile.gch
+build $builddir/src/cli/cli.o: cpp_pch src/cli/cli.cpp | $builddir/$pchfile.gch
+build $builddir/src/scanner/scanner.o: cpp_pch src/scanner/scanner.cpp | $builddir/$pchfile.gch
+build $builddir/src/scanner/source-location.o: cpp_pch src/scanner/source-location.cpp | $builddir/$pchfile.gch
+build $builddir/src/ast/scope.o: cpp_pch src/ast/scope.cpp | $builddir/$pchfile.gch
+build $builddir/src/ast/node-types/ast-node.o: cpp_pch src/ast/node-types/ast-node.cpp | $builddir/$pchfile.gch
+build $builddir/src/main.o: cpp_pch src/main.cpp | $builddir/$pchfile.gch
+
+# Source files that are linked normally, even in unity build
+build $builddir/src/scanner/gen-token-types_c.o: gen_c_rule src/scanner/gen-token-types_c.sh
+build $builddir/src/scanner/lexer.o: flex_rule src/scanner/lexer.l
+
+# ----------------------------------------------------------------------- Target
+
+build $builddir/$pchfile.gch: pch $pchfile
+
+build $builddir/_unity.o: unity  src/contrib/fmt/src/format.cc src/contrib/fmt/src/posix.cc  src/main.cpp src/ast/node-types/ast-node.cpp src/ast/scope.cpp src/cli/cli-args.cpp src/cli/cli.cpp src/driver/compiler-context.cpp src/driver/diagnostic.cpp src/parser/parse-rules/accept-element-list.cpp src/parser/parse-rules/accept-element.cpp src/parser/parse-rules/accept-grammar.cpp src/parser/parse-rules/accept-rule.cpp src/parser/parser.cpp src/scanner/scanner.cpp src/scanner/source-location.cpp src/sema/build-symbol-table.cpp src/sema/calculate-first-final-follow-sets.cpp src/sema/calculate-ll-rules.cpp
+build $target.unity: link_exec $builddir/_unity.o  $builddir/src/scanner/gen-token-types_c.o $builddir/src/scanner/lexer.o
+
+build $target: link_exec  $builddir/src/ast/node-types/ast-node.o $builddir/src/ast/scope.o $builddir/src/cli/cli-args.o $builddir/src/cli/cli.o $builddir/src/contrib/fmt/src/format.o $builddir/src/contrib/fmt/src/posix.o $builddir/src/driver/compiler-context.o $builddir/src/driver/diagnostic.o $builddir/src/main.o $builddir/src/parser/parse-rules/accept-element-list.o $builddir/src/parser/parse-rules/accept-element.o $builddir/src/parser/parse-rules/accept-grammar.o $builddir/src/parser/parse-rules/accept-rule.o $builddir/src/parser/parser.o $builddir/src/scanner/scanner.o $builddir/src/scanner/source-location.o $builddir/src/sema/build-symbol-table.o $builddir/src/sema/calculate-first-final-follow-sets.o $builddir/src/sema/calculate-ll-rules.o  $builddir/src/scanner/gen-token-types_c.o $builddir/src/scanner/lexer.o
+
+# default
+default $target
+

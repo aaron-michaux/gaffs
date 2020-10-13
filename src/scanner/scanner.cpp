@@ -173,14 +173,14 @@ bool This::found_eof() const noexcept
    return worker_->tokens().size() > 0 && worker_->tokens().back().is_eof();
 }
 
-bool This::has_next() noexcept { return !peek(1).is_eof(); }
+bool This::has_next() noexcept { return !peek(0).is_eof(); }
 
 void This::set_position(size_t new_position) noexcept
 {
    position_ = new_position;
 }
 
-auto This::next_token_id() noexcept { return peek(1).id(); }
+uint16_t This::next_token_id() noexcept { return peek(1).id(); }
 
 const Token& This::consume() noexcept
 {
