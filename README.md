@@ -46,7 +46,6 @@ preprocessor for ninja-build.
  > cd mobius-legacy
  > make
  > sudo make install
- > cd ..
  
  # Install gcc and clang
  > cd /path/to/gaffs/project
