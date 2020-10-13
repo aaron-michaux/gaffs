@@ -27,7 +27,7 @@ point it at your own installation.
 
  # Downloads, compiles, installs clang-11 and gcc-10.2, installing
  # to '/opt/cc'. Tested on Ubuntu 18.04. YMMV. (Basically update the
- # dependent pacakges.)
+ # dependent pacakges for your distribution.)
  
  > sudo ./build-cc.sh
 
