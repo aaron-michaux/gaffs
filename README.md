@@ -54,7 +54,7 @@ preprocessor for ninja-build.
  # Enjoy! eg, ./run.sh [gcc|clang|llvm] unity? [debug|release|gdb|asan|usan|tsan] ...
  > ./run.sh gcc asan examples/gaffs.g
  
- # llvm uses clang and libc++. 'lto' turns on link-to-optimization.
+ # llvm uses clang and libc++. 'lto' turns on link-time-optimization.
  > ./run.sh llvm release lto examples/gaffs.g
  
  # You can do a unity build! Yes, I did find ODR violations using this.
