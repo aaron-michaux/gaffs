@@ -5,9 +5,9 @@ Gaffs is a tool for analyzing context free grammars. It will print out the first
 
 ## Building
 
-A `build.ninja` file is supplied that build `gaffs` asan mode. 
-Tested on clang-11. Edit the top two lines of `build.ninja` to
-point it at your own installation.
+A `build.ninja` file is supplied that builds `gaffs` with debug symbols and the address santizier linked (asan). 
+Edit the top two lines of `build.ninja` to
+point it at your own installation. Tested on clang-11. 
 
 
 ``` bash
