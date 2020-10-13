@@ -4,8 +4,6 @@ set -e
 
 PPWD="$(cd "$(dirname "$0")"; pwd)"
 
-# source "$PPWD/project-config/toolchain-configs/set-env.sh"
-
 # ------------------------------------------------------------ Parse Commandline
 
 CLEAN=
@@ -160,19 +158,17 @@ NINJA_TARGET="$TARGET"
 
 [ "$BUILD_ONLY" = "1" ] && exit 0
 
-# ---- If we're building the executable (TARGET_FILE0), then run it
+
 
 if [ "$DO_INSTALL" = "1" ] ; then
-
+    # ---- Install gaffs if that's what we're doing
     sudo cp "$PPWD/$TARGET" /usr/local/bin/
-       
+    
 elif [ "$TARGET_FILE" = "$TARGET_FILE0" ] ; then
-
+    # ---- If we're building the executable (TARGET_FILE0), then run it
+    
     export LSAN_OPTIONS="suppressions=$PPWD/project-config/lsan.supp"
     export ASAN_OPTIONS="protect_shadow_gap=0,detect_leaks=0"
-
-    export TF_CPP_MIN_LOG_LEVEL="1"
-    export AUTOGRAPH_VERBOSITY="1"
     
     PRODUCT="$PPWD/$TARGET"
         

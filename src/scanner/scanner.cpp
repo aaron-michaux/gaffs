@@ -41,7 +41,11 @@ struct Scanner::Worker
       SourceLocation loc;
       assert(n_texts <= std::numeric_limits<decltype(loc.key)>::max());
    }
-   ~Worker() { cleanup_scanner_resources_(); }
+   ~Worker()
+   {
+      cleanup_scanner_resources_();
+      TRACE("DELETE");
+   }
 
    Token produce_token() noexcept;
    auto& tokens() noexcept { return tokens_; }
